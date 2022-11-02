@@ -16,3 +16,8 @@ DEFAULT_COMMANDS = (
     ('bestdeal', "Настраиваемый поиск отелей"),
     ('history', "Вывести историю поиска")
 )
+RAPID_API_URL = "https://hotels4.p.rapidapi.com/v2/get-meta-data"
+RAPID_API_HEADERS = {
+    "X-RapidAPI-Key": RAPID_API_KEY,
+    "X-RapidAPI-Host": "hotels4.p.rapidapi.com"
+}
