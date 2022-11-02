@@ -1,11 +1,11 @@
 from telebot.handler_backends import State, StatesGroup
 
 
-class UserSearchState(StatesGroup):
+class LowPriceStates(StatesGroup):
     city = State()
+    cities = State()
     amount_hotels = State()
     need_photo = State()
     amount_photo = State()
-    price_range = State()
-    distance_from = State()
-    distance_to = State()
+    start_date = State()
+    end_date = State()
