@@ -1,5 +1,4 @@
 from telebot.types import Message
-# from keyboards.reply.yes_no_reply import get_yes_no
 from keyboards.inline.yes_no_reply import get_yes_no
 from datetime import date, timedelta
 from loader import bot
@@ -38,7 +37,7 @@ def get_amount_hotels(message: Message):
 
 @bot.message_handler(state=LowPriceStates.amount_hotels, is_digit=False)  # Если количество отелей - не число
 def amount_hotels_incorrect(message: Message):
-    bot.send_message(message.from_user.id, 'Введите число от 1 до 10')
+    bot.send_message(message.from_user.id, 'Количество отелей должно быть от 1 до 10')
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'yes' or call.data == 'no')
@@ -47,13 +46,14 @@ def need_photo_reply(call):
         if call.data == "yes":
             bot.send_message(call.message.chat.id, text='Введите количество фото')
             data['need_photo'] = True
-            bot.set_state(call.message.chat.id, LowPriceStates.amount_photo, call.message.chat.id)
+            bot.set_state(call.from_user.id, LowPriceStates.amount_photo, call.message.chat.id)
         elif call.data == "no":
             data['need_photo'] = False
             data['amount_photo'] = 0
-            ask_for_start_date(call.message)
+            calendar, step = DetailedTelegramCalendar(min_date=date.today()).build()
+            bot.send_message(call.message.chat.id, f"Введите дату заезда", reply_markup=calendar)
         else:
-            bot.send_message(call.message.from_user.id, text='Нажмите кнопку "Да" или "Нет"')
+            bot.send_message(call.message.chat.id, text='Нажмите кнопку "Да" или "Нет"')
 
 
 @bot.message_handler(state=LowPriceStates.amount_photo, is_digit=True)  # Если количество фото - число
@@ -61,19 +61,15 @@ def get_amount_photo(message: Message):
     if 1 <= int(message.text) <= 10:
         with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
             data['amount_photo'] = int(message.text)
-        ask_for_start_date(message)
+        calendar, step = DetailedTelegramCalendar(min_date=date.today()).build()
+        bot.send_message(message.chat.id, f"Введите дату заезда", reply_markup=calendar)
     else:
         bot.send_message(message.from_user.id, 'Количество фото должно быть от 1 до 10')
 
 
 @bot.message_handler(state=LowPriceStates.amount_photo, is_digit=False)  # Если количество фото - не число
 def amount_photo_incorrect(message: Message):
-    bot.send_message(message.from_user.id, 'Введите число от 1 до 10')
-
-
-def ask_for_start_date(message: Message):
-    calendar, step = DetailedTelegramCalendar(min_date=date.today()).build()
-    bot.send_message(message.chat.id, f"Введите дату заезда", reply_markup=calendar)
+    bot.send_message(message.from_user.id, 'Количество фото от 1 до 10')
 
 
 @bot.callback_query_handler(func=DetailedTelegramCalendar.func())
@@ -92,16 +88,12 @@ def date_reply(call):
         with bot.retrieve_data(call.message.chat.id, call.message.chat.id) as data:
             if not data.get('start_date'):
                 data['start_date'] = result
-                ask_for_end_date(call.message, result)
+                calendar, step = DetailedTelegramCalendar(min_date=result + timedelta(1)).build()
+                bot.send_message(call.message.chat.id, f"Введите дату выезда", reply_markup=calendar)
             elif not data.get('end_date'):
                 data['end_date'] = result
                 data_dict = data
                 ready_for_answer(call.message, data_dict)
-
-
-def ask_for_end_date(message, start_date):
-    calendar, step = DetailedTelegramCalendar(min_date=start_date + timedelta(1)).build()
-    bot.send_message(message.chat.id, f"Введите дату выезда", reply_markup=calendar)
 
 
 def ready_for_answer(message, data):
