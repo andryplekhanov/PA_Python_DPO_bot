@@ -21,3 +21,8 @@ RAPID_API_HEADERS = {
     "X-RapidAPI-Key": RAPID_API_KEY,
     "X-RapidAPI-Host": "hotels4.p.rapidapi.com"
 }
+RAPID_API_ENDPOINTS = {
+    "cities-groups": "https://hotels4.p.rapidapi.com/locations/v2/search",
+    "hotel-list": "https://hotels4.p.rapidapi.com/properties/list",
+    "hotel-photos": "https://hotels4.p.rapidapi.com/properties/get-hotel-photos"
+}
