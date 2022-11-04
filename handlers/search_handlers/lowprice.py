@@ -1,28 +1,44 @@
-from telebot.types import Message
-from keyboards.inline.yes_no_reply import get_yes_no
-from datetime import date, timedelta
 from loader import bot
+from telebot.types import Message, CallbackQuery
+from keyboards.inline.yes_no_reply import get_yes_no
+from keyboards.inline.cities_for_choice import print_cities
+from keyboards.inline.cities_for_choice import for_city
 from states.search_info import LowPriceStates
 from telegram_bot_calendar import DetailedTelegramCalendar
+from datetime import date, timedelta
+from utils.get_cities import parse_cities_group
+import re
 
 
 @bot.message_handler(commands=['lowprice'])
-def bot_lowprice(message: Message):
-    bot.set_state(message.from_user.id, LowPriceStates.city, message.chat.id)
+def bot_low_price(message: Message):
+    bot.set_state(message.from_user.id, LowPriceStates.cities, message.chat.id)
     bot.send_message(message.from_user.id, 'Введите город')
 
 
-@bot.message_handler(state=LowPriceStates.city, is_digit=False)  # Если название города - не цифры
-def get_city(message: Message):
-    bot.send_message(message.from_user.id, 'Сколько отелей найти?')
-    bot.set_state(message.from_user.id, LowPriceStates.amount_hotels, message.chat.id)
-    with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
-        data['city'] = message.text.lower()
-
-
-@bot.message_handler(state=LowPriceStates.city, is_digit=True)  # Если название города - цифры
-def get_city(message: Message):
+@bot.message_handler(state=LowPriceStates.cities, is_digit=True)  # Если название города - цифры
+def get_city_incorrect(message: Message):
     bot.send_message(message.from_user.id, 'Название города должно состоять из букв')
+
+
+@bot.message_handler(state=LowPriceStates.cities, is_digit=False)  # Если название города - не цифры
+def get_city(message: Message):
+    cities_dict = parse_cities_group(message.text)
+    if cities_dict:
+        with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+            data['cities'] = cities_dict
+        bot.send_message(message.from_user.id, 'Пожалуйста, уточните:', reply_markup=print_cities(cities_dict))
+    else:
+        bot.send_message(message.from_user.id, 'Не нахожу такой город. Введите ещё раз.')
+
+
+@bot.callback_query_handler(func=None, city_config=for_city.filter())
+def clarify_city(call: CallbackQuery):
+    with bot.retrieve_data(call.message.chat.id, call.message.chat.id) as data:
+        data['city_id'] = re.search(r'\d+', call.data).group()
+        data['city'] = [city for city, city_id in data['cities'].items() if city_id == data['city_id']][0]
+    bot.set_state(call.from_user.id, LowPriceStates.amount_hotels, call.message.chat.id)
+    bot.send_message(call.message.chat.id, 'Сколько отелей найти?')
 
 
 @bot.message_handler(state=LowPriceStates.amount_hotels, is_digit=True)  # Если количество отелей - число
@@ -100,12 +116,9 @@ def ready_for_answer(message, data):
     bot.delete_state(message.from_user.id, message.chat.id)
     amount_nights = int((data['end_date'] - data['start_date']).total_seconds() / 86400)
     reply_str = f"Ок, ищем: <b>топ {data['amount_hotels']}</b> " \
-                f"самых дешёвых отелей в городе <b>{data['city'].capitalize()}</b>\n" \
+                f"самых дешёвых отелей в городе <b>{data['city']}</b>\n" \
                 f"{f'Нужно загрузить фото' if data['need_photo'] else f'Фото не нужны'}" \
                 f" — <b>{data['amount_photo']}</b> штук\n" \
                 f"Длительность поездки: <b>{amount_nights} ноч.</b> " \
                 f"(с {data['start_date']} по {data['end_date']})."
     bot.send_message(message.chat.id, reply_str, parse_mode="html")
-
-    # querystring = {"q": "new york", "locale": "en_US", "langid": "1033", "siteid": "300000001"}
-    # response = requests.request("GET", config.RAPID_API_URL, headers=config.RAPID_API_HEADERS, params=querystring)
