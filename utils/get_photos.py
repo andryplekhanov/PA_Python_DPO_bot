@@ -19,7 +19,12 @@ def process_photos(all_photos, amount_photos):
     photos = all_photos[:amount_photos]
     result = list()
     for photo in photos:
-        url = photo.get('baseUrl')
-        suffix = [size.get('suffix') for size in photo.get('sizes') if size.get('suffix') in ('z', 'w')][0]
-        result.append(url.format(size=suffix))
+        try:
+            url = photo.get('baseUrl')
+            suffix = [size.get('suffix') if size.get('suffix') in ('z', 'w') else size.get('suffix')
+                      for size in photo.get('sizes')][0]
+            result.append(url.format(size=suffix))
+        except Exception:
+            result = None
     return result
+
