@@ -8,6 +8,7 @@ from telegram_bot_calendar import DetailedTelegramCalendar
 from datetime import date, timedelta
 from utils.get_cities import parse_cities_group
 from utils.get_hotels import parse_hotels, process_hotels_info, get_hotel_info_str
+from utils.get_photos import parse_photos, process_photos
 import re
 
 
@@ -19,7 +20,7 @@ def bot_low_price(message: Message):
 
 @bot.message_handler(state=LowPriceStates.cities, is_digit=True)  # Если название города - цифры
 def get_city_incorrect(message: Message):
-    bot.send_message(message.from_user.id, 'Название города должно состоять из букв')
+    bot.send_message(message.from_user.id, '⚠️ Название города должно состоять из букв')
 
 
 @bot.message_handler(state=LowPriceStates.cities, is_digit=False)  # Если название города - не цифры
@@ -30,7 +31,7 @@ def get_city(message: Message):
             data['cities'] = cities_dict
         bot.send_message(message.from_user.id, 'Пожалуйста, уточните:', reply_markup=print_cities(cities_dict))
     else:
-        bot.send_message(message.from_user.id, 'Не нахожу такой город. Введите ещё раз.')
+        bot.send_message(message.from_user.id, '⚠️ Не нахожу такой город. Введите ещё раз.')
 
 
 @bot.callback_query_handler(func=None, city_config=for_city.filter())
@@ -49,12 +50,12 @@ def get_amount_hotels(message: Message):
             data['amount_hotels'] = int(message.text)
         bot.send_message(message.from_user.id, 'Желаете загрузить фото отелей?', reply_markup=get_yes_no())
     else:
-        bot.send_message(message.from_user.id, 'Количество отелей в топе должно быть от 1 до 10')
+        bot.send_message(message.from_user.id, '⚠️ Количество отелей в топе должно быть от 1 до 10')
 
 
 @bot.message_handler(state=LowPriceStates.amount_hotels, is_digit=False)  # Если количество отелей - не число
 def amount_hotels_incorrect(message: Message):
-    bot.send_message(message.from_user.id, 'Количество отелей должно быть от 1 до 10')
+    bot.send_message(message.from_user.id, '⚠️ Количество отелей должно быть от 1 до 10')
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'yes' or call.data == 'no')
@@ -70,7 +71,7 @@ def need_photo_reply(call):
             calendar, step = DetailedTelegramCalendar(min_date=date.today()).build()
             bot.send_message(call.message.chat.id, f"Введите дату заезда", reply_markup=calendar)
         else:
-            bot.send_message(call.message.chat.id, text='Нажмите кнопку "Да" или "Нет"')
+            bot.send_message(call.message.chat.id, text='⚠️ Нажмите кнопку "Да" или "Нет"')
 
 
 @bot.message_handler(state=LowPriceStates.amount_photo, is_digit=True)  # Если количество фото - число
@@ -81,12 +82,12 @@ def get_amount_photo(message: Message):
         calendar, step = DetailedTelegramCalendar(min_date=date.today()).build()
         bot.send_message(message.chat.id, f"Введите дату заезда", reply_markup=calendar)
     else:
-        bot.send_message(message.from_user.id, 'Количество фото должно быть от 1 до 10')
+        bot.send_message(message.from_user.id, '⚠️ Количество фото должно быть от 1 до 10')
 
 
 @bot.message_handler(state=LowPriceStates.amount_photo, is_digit=False)  # Если количество фото - не число
 def amount_photo_incorrect(message: Message):
-    bot.send_message(message.from_user.id, 'Количество фото от 1 до 10')
+    bot.send_message(message.from_user.id, '⚠️ Количество фото от 1 до 10')
 
 
 @bot.callback_query_handler(func=DetailedTelegramCalendar.func())
@@ -99,14 +100,14 @@ def date_reply(call):
             result, key, step = DetailedTelegramCalendar(min_date=new_start_date).process(call.data)
 
     if not result and key:
-        bot.edit_message_text(f"Введите дату", call.message.chat.id,
-                              call.message.message_id, reply_markup=key)
+        bot.edit_message_text("Введите дату", call.message.chat.id, call.message.message_id, reply_markup=key)
     elif result:
         with bot.retrieve_data(call.message.chat.id, call.message.chat.id) as data:
             if not data.get('start_date'):
                 data['start_date'] = result
                 calendar, step = DetailedTelegramCalendar(min_date=result + timedelta(1)).build()
-                bot.send_message(call.message.chat.id, f"Введите дату выезда", reply_markup=calendar)
+                bot.edit_message_text("Введите дату выезда",
+                                      call.message.chat.id, call.message.message_id, reply_markup=calendar)
             elif not data.get('end_date'):
                 data['end_date'] = result
                 data_dict = data
@@ -115,8 +116,9 @@ def date_reply(call):
 
 def ready_for_answer(message, data):
     bot.delete_state(message.from_user.id, message.chat.id)
+
     amount_nights = int((data['end_date'] - data['start_date']).total_seconds() / 86400)
-    reply_str = f"Ок, ищем: <b>топ {data['amount_hotels']}</b> " \
+    reply_str = f"✅ Ок, ищем: <b>топ {data['amount_hotels']}</b> " \
                 f"самых дешёвых отелей в городе <b>{data['city']}</b>\n" \
                 f"{f'Нужно загрузить фото' if data['need_photo'] else f'Фото не нужны'}" \
                 f" — <b>{data['amount_photo']}</b> штук\n" \
@@ -131,5 +133,21 @@ def ready_for_answer(message, data):
         for hotel_id, hotel_data in result_dict.items():
             hotel_info_str = get_hotel_info_str(hotel_data, amount_nights)
             bot.send_message(message.chat.id, hotel_info_str, parse_mode="html", disable_web_page_preview=True)
+
+            if data['need_photo']:
+                all_photos = "https://www.hotels.com/ho{id}/?pwaThumbnailDialog=thumbnail-gallery".format(id=hotel_id)
+                msg = "<b>🖼 Фото отеля:</b>\n" \
+                      "   больше фото <a href='{all_photos}'>по ссылке >></a>".format(all_photos=all_photos)
+                bot.send_message(message.chat.id, msg, parse_mode="html", disable_web_page_preview=True)
+                photos_info_list = parse_photos(hotel_id)
+                if photos_info_list:
+                    photos_list = process_photos(photos_info_list, data['amount_photo'])
+                    if photos_list:
+                        for photo_url in photos_list:
+                            bot.send_photo(message.chat.id, photo_url)
+                    else:
+                        bot.send_message(message.chat.id, '⚠️ Ошибка загрузки фото.')
+                else:
+                    bot.send_message(message.chat.id, '⚠️ Ошибка загрузки фото.')
     else:
-        bot.send_message(message.chat.id, 'Ошибка. Попробуйте ещё раз!')
+        bot.send_message(message.chat.id, '⚠️ Ошибка. Попробуйте ещё раз!')
