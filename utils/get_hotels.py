@@ -48,10 +48,10 @@ def process_hotels_info(hotels_info_list, amount_nights):
 
 
 def get_hotel_info_str(hotel_data, amount_nights):
-    result = f"<b>Отель:</b> {hotel_data['name']}\n" \
-            f"<b>Район:</b> {hotel_data['hotel_neighbourhood']}\n" \
-            f"<b>Расстояние до центра:</b> {hotel_data['distance_city_center']}\n" \
-            f"<b>Цена за 1 ночь: </b> от {hotel_data['price_per_night']}$\n" \
-            f"<b>Примерная стоимость за {amount_nights} ночей:</b> {hotel_data['total_price']}$\n" \
-            f"<b>Подробнее об отеле смотрите <a href='{hotel_data['hotel_url']}'>на сайте >></a></b>"
+    result = f"<b>🏩 Отель:</b> {hotel_data['name']}\n" \
+            f"<b>📍 Район:</b> {hotel_data['hotel_neighbourhood']}\n" \
+            f"<b>🚕 Расстояние до центра:</b> {hotel_data['distance_city_center']}\n" \
+            f"<b>💰 Цена за 1 ночь: </b> от {hotel_data['price_per_night']}$\n" \
+            f"<b>💰💰 Примерная стоимость за {amount_nights} ноч.:</b> {hotel_data['total_price']}$\n" \
+            f"<b>⚓️ Подробнее об отеле <a href='{hotel_data['hotel_url']}'>на сайте >></a></b>"
     return result
