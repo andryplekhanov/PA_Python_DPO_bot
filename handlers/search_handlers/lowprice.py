@@ -7,6 +7,7 @@ from states.search_info import LowPriceStates
 from telegram_bot_calendar import DetailedTelegramCalendar
 from datetime import date, timedelta
 from utils.get_cities import parse_cities_group
+from utils.get_hotels import parse_hotels, process_hotels_info, get_hotel_info_str
 import re
 
 
@@ -122,3 +123,13 @@ def ready_for_answer(message, data):
                 f"Длительность поездки: <b>{amount_nights} ноч.</b> " \
                 f"(с {data['start_date']} по {data['end_date']})."
     bot.send_message(message.chat.id, reply_str, parse_mode="html")
+
+    hotels = parse_hotels(data)['results']
+
+    if hotels:
+        result_dict = process_hotels_info(hotels, amount_nights)
+        for hotel_id, hotel_data in result_dict.items():
+            hotel_info_str = get_hotel_info_str(hotel_data, amount_nights)
+            bot.send_message(message.chat.id, hotel_info_str, parse_mode="html", disable_web_page_preview=True)
+    else:
+        bot.send_message(message.chat.id, 'Ошибка. Попробуйте ещё раз!')
