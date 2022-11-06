@@ -18,8 +18,9 @@ def parse_cities_group(city):
             result = json.loads(f"{{{find[0]}}}")
             cities = dict()
             for entity in result['entities']:
-                pattern = r'\<(/?[^>]+)>'
-                city_clear_name = re.sub(pattern, '', entity['caption'])
-                cities[city_clear_name] = entity['destinationId']
+                if entity['type'] == 'CITY':
+                    pattern = r'\<(/?[^>]+)>'
+                    city_clear_name = re.sub(pattern, '', entity['caption'])
+                    cities[city_clear_name] = entity['destinationId']
             return cities
     return None
