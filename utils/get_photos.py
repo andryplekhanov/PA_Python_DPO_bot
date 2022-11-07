@@ -1,9 +1,10 @@
+from typing import Dict, List, Union
 from utils.api_reqiest import request_to_api
 from config_data.config import RAPID_API_HEADERS, RAPID_API_ENDPOINTS
 import json
 
 
-def parse_photos(hotel_id):
+def parse_photos(hotel_id: int) -> Union[List[Dict], None]:
     querystring = {"id": hotel_id}
     responce = request_to_api(
         url=RAPID_API_ENDPOINTS['hotel-photos'],
@@ -15,7 +16,7 @@ def parse_photos(hotel_id):
     return None
 
 
-def process_photos(all_photos, amount_photos):
+def process_photos(all_photos: List[Dict], amount_photos: int) -> Union[List[str], None]:
     photos = all_photos[:amount_photos]
     result = list()
     for photo in photos:
@@ -27,4 +28,3 @@ def process_photos(all_photos, amount_photos):
         except Exception:
             result = None
     return result
-

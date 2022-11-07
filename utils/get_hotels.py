@@ -1,10 +1,11 @@
+from typing import Dict, List, Union
 from utils.api_reqiest import request_to_api
 from config_data.config import RAPID_API_HEADERS, RAPID_API_ENDPOINTS
 import re
 import json
 
 
-def parse_hotels(data_dict):
+def parse_hotels(data_dict: Dict[str, Dict[str, str]]) -> Union[Dict[str, List[Dict]], None]:
     querystring = {
         "destinationId": data_dict['city_id'],
         "pageNumber": "1", "pageSize": data_dict['amount_hotels'],
@@ -23,7 +24,7 @@ def parse_hotels(data_dict):
     return None
 
 
-def process_hotels_info(hotels_info_list, amount_nights):
+def process_hotels_info(hotels_info_list: List[Dict], amount_nights: int) -> Dict:
     hotels_info_dict = dict()
 
     for hotel in hotels_info_list:
@@ -52,10 +53,10 @@ def process_hotels_info(hotels_info_list, amount_nights):
             'hotel_url': hotel_url,
             'hotel_neighbourhood': hotel_neighbourhood
         }
-    return hotels_info_dict
+    return hotels_info_dict  # теоретически может быть пустым
 
 
-def get_hotel_info_str(hotel_data, amount_nights):
+def get_hotel_info_str(hotel_data: Dict, amount_nights: int) -> str:
     result = f"<b>🏩 Отель:</b> {hotel_data['name']}\n" \
             f"<b>📍 Район:</b> {hotel_data['hotel_neighbourhood']}\n" \
             f"<b>🚕 Расстояние до центра:</b> {hotel_data['distance_city_center']}\n" \

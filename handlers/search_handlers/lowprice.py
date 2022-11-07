@@ -1,4 +1,5 @@
 from loader import bot
+from typing import Dict
 from telebot.types import Message, CallbackQuery
 from keyboards.inline.yes_no_reply import get_yes_no
 from keyboards.inline.cities_for_choice import print_cities
@@ -13,18 +14,19 @@ import re
 
 
 @bot.message_handler(commands=['lowprice'])
-def bot_low_price(message: Message):
+def bot_low_price(message: Message) -> None:
+    bot.delete_state(message.from_user.id, message.chat.id)  # перед началом опроса зачищаем все собранные состояния
     bot.set_state(message.from_user.id, LowPriceStates.cities, message.chat.id)
     bot.send_message(message.from_user.id, 'Введите город')
 
 
 @bot.message_handler(state=LowPriceStates.cities, is_digit=True)  # Если название города - цифры
-def get_city_incorrect(message: Message):
+def get_city_incorrect(message: Message) -> None:
     bot.send_message(message.from_user.id, '⚠️ Название города должно состоять из букв')
 
 
 @bot.message_handler(state=LowPriceStates.cities, is_digit=False)  # Если название города - не цифры
-def get_city(message: Message):
+def get_city(message: Message) -> None:
     cities_dict = parse_cities_group(message.text)
     if cities_dict:
         with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
@@ -35,7 +37,7 @@ def get_city(message: Message):
 
 
 @bot.callback_query_handler(func=None, city_config=for_city.filter())
-def clarify_city(call: CallbackQuery):
+def clarify_city(call: CallbackQuery) -> None:
     with bot.retrieve_data(call.message.chat.id, call.message.chat.id) as data:
         data['city_id'] = re.search(r'\d+', call.data).group()
         data['city'] = [city for city, city_id in data['cities'].items() if city_id == data['city_id']][0]
@@ -44,7 +46,7 @@ def clarify_city(call: CallbackQuery):
 
 
 @bot.message_handler(state=LowPriceStates.amount_hotels, is_digit=True)  # Если количество отелей - число
-def get_amount_hotels(message: Message):
+def get_amount_hotels(message: Message) -> None:
     if 1 <= int(message.text) <= 10:
         with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
             data['amount_hotels'] = int(message.text)
@@ -54,12 +56,12 @@ def get_amount_hotels(message: Message):
 
 
 @bot.message_handler(state=LowPriceStates.amount_hotels, is_digit=False)  # Если количество отелей - не число
-def amount_hotels_incorrect(message: Message):
+def amount_hotels_incorrect(message: Message) -> None:
     bot.send_message(message.from_user.id, '⚠️ Количество отелей должно быть от 1 до 10')
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'yes' or call.data == 'no')
-def need_photo_reply(call):
+def need_photo_reply(call: CallbackQuery) -> None:
     with bot.retrieve_data(call.message.chat.id, call.message.chat.id) as data:
         if call.data == "yes":
             bot.send_message(call.message.chat.id, text='Введите количество фото')
@@ -75,7 +77,7 @@ def need_photo_reply(call):
 
 
 @bot.message_handler(state=LowPriceStates.amount_photo, is_digit=True)  # Если количество фото - число
-def get_amount_photo(message: Message):
+def get_amount_photo(message: Message) -> None:
     if 1 <= int(message.text) <= 10:
         with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
             data['amount_photo'] = int(message.text)
@@ -86,12 +88,12 @@ def get_amount_photo(message: Message):
 
 
 @bot.message_handler(state=LowPriceStates.amount_photo, is_digit=False)  # Если количество фото - не число
-def amount_photo_incorrect(message: Message):
+def amount_photo_incorrect(message: Message) -> None:
     bot.send_message(message.from_user.id, '⚠️ Количество фото от 1 до 10')
 
 
 @bot.callback_query_handler(func=DetailedTelegramCalendar.func())
-def date_reply(call):
+def date_reply(call: CallbackQuery) -> None:
     with bot.retrieve_data(call.message.chat.id, call.message.chat.id) as data:
         if not data.get('start_date'):
             result, key, step = DetailedTelegramCalendar(min_date=date.today()).process(call.data)
@@ -114,9 +116,7 @@ def date_reply(call):
                 ready_for_answer(call.message, data_dict)
 
 
-def ready_for_answer(message, data):
-    bot.delete_state(message.from_user.id, message.chat.id)
-
+def ready_for_answer(message: Message, data: Dict) -> None:
     amount_nights = int((data['end_date'] - data['start_date']).total_seconds() / 86400)
     reply_str = f"✅ Ок, ищем: <b>топ {data['amount_hotels']}</b> " \
                 f"самых дешёвых отелей в городе <b>{data['city']}</b>\n" \
@@ -150,7 +150,7 @@ def ready_for_answer(message, data):
                         else:
                             bot.send_message(message.chat.id, '⚠️ Ошибка загрузки фото.')
                     else:
-                        bot.send_message(message.chat.id, '⚠️ У отеля нет фото.')
+                        bot.send_message(message.chat.id, '⚠️ Ошибка загрузки фото.')
         else:
             bot.send_message(message.chat.id, '⚠️ Не удалось загрузить информацию по отелям города!')
     else:

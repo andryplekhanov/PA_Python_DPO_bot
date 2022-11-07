@@ -1,11 +1,11 @@
-from typing import Dict
+from typing import Dict, Union
 from utils.api_reqiest import request_to_api
 from config_data.config import RAPID_API_HEADERS, RAPID_API_ENDPOINTS
 import re
 import json
 
 
-def parse_cities_group(city: str) -> Dict[str, str] or None:
+def parse_cities_group(city: str) -> Union[Dict[str, str], None]:
     querystring = {"query": city, "locale": "ru_RU", "currency": "USD"}
     responce = request_to_api(
         url=RAPID_API_ENDPOINTS['cities-groups'],
