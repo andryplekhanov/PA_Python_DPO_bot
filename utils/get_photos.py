@@ -9,7 +9,7 @@ def parse_photos(hotel_id):
         url=RAPID_API_ENDPOINTS['hotel-photos'],
         querystring=querystring,
         headers=RAPID_API_HEADERS)
-    if responce:
+    if responce and responce.text != '':  # responce.text == '' - это когда у отеля нет фоток, хотя responce == 200
         result = json.loads(responce.text).get('hotelImages')
         return result
     return None
