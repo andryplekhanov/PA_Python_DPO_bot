@@ -35,10 +35,12 @@ def process_hotels_info(hotels_info_list, amount_nights):
         price_per_night = hotel.get('ratePlan', {}).get('price', {}).get('exactCurrent', 0)
         total_price = round(price_per_night * amount_nights, 2)
 
-        distance_city_center = [
-            landmark.get('distance') for landmark in hotel.get('landmarks')
-            if landmark.get('label') == 'Центр города' or landmark.get('label') == 'City center'][0] \
-            if hotel.get('landmarks') else 'No data'
+        distance_city_center = 'No data'
+        if hotel.get('landmarks'):
+            for landmark in hotel.get('landmarks'):
+                if landmark.get('label') in ('Центр города', 'City center'):
+                    distance_city_center = landmark.get('distance')
+                    break
 
         hotel_neighbourhood = hotel.get('neighbourhood', 'No data')
 
