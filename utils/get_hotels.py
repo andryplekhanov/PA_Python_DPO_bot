@@ -25,16 +25,22 @@ def parse_hotels(data_dict):
 
 def process_hotels_info(hotels_info_list, amount_nights):
     hotels_info_dict = dict()
+
     for hotel in hotels_info_list:
-        hotel_id = hotel['id']
-        hotel_name = hotel['name']
-        price_per_night = hotel['ratePlan']['price']['exactCurrent']
+        hotel_id = hotel.get('id')
+        if not hotel_id:
+            continue
+        hotel_url = f'https://www.hotels.com/ho{str(hotel_id)}/'
+        hotel_name = hotel.get('name', 'No name')
+        price_per_night = hotel.get('ratePlan', {}).get('price', {}).get('exactCurrent', 0)
         total_price = round(price_per_night * amount_nights, 2)
+
         distance_city_center = [
-            landmark['distance'] for landmark in hotel['landmarks']
-            if landmark['label'] == 'Центр города' or landmark['label'] == 'City center'][0]
-        hotel_url = 'https://www.hotels.com/ho' + str(hotel_id) + '/'
-        hotel_neighbourhood = hotel['neighbourhood']
+            landmark.get('distance') for landmark in hotel.get('landmarks')
+            if landmark.get('label') == 'Центр города' or landmark.get('label') == 'City center'][0] \
+            if hotel.get('landmarks') else 'No data'
+
+        hotel_neighbourhood = hotel.get('neighbourhood', 'No data')
 
         hotels_info_dict[hotel_id] = {
             'name': hotel_name,
