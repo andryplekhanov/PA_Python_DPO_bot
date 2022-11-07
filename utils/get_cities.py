@@ -1,10 +1,11 @@
+from typing import Dict
 from utils.api_reqiest import request_to_api
 from config_data.config import RAPID_API_HEADERS, RAPID_API_ENDPOINTS
 import re
 import json
 
 
-def parse_cities_group(city):
+def parse_cities_group(city: str) -> Dict[str, str] or None:
     querystring = {"query": city, "locale": "ru_RU", "currency": "USD"}
     responce = request_to_api(
         url=RAPID_API_ENDPOINTS['cities-groups'],
@@ -15,12 +16,15 @@ def parse_cities_group(city):
         pattern = r'(?<="CITY_GROUP",).+?[\]]'
         find = re.search(pattern, responce.text)
         if find:
-            result = json.loads(f"{{{find[0]}}}")
             cities = dict()
-            for entity in result['entities']:
-                if entity['type'] == 'CITY':
-                    pattern = r'\<(/?[^>]+)>'
-                    city_clear_name = re.sub(pattern, '', entity['caption'])
-                    cities[city_clear_name] = entity['destinationId']
+            try:
+                result = json.loads(f"{{{find[0]}}}")
+                for entity in result.get('entities'):
+                    if entity.get('type') == 'CITY':
+                        pattern = r'\<(/?[^>]+)>'
+                        city_clear_name = re.sub(pattern, '', entity.get('caption', {}))
+                        cities[city_clear_name] = entity.get('destinationId')
+            except Exception:
+                cities = None
             return cities
     return None
