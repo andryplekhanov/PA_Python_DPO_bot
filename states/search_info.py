@@ -1,7 +1,8 @@
 from telebot.handler_backends import State, StatesGroup
 
 
-class LowPriceStates(StatesGroup):
+class UsersStates(StatesGroup):
+    last_command = State()
     city = State()
     city_id = State()
     cities = State()
