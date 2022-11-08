@@ -6,11 +6,12 @@ import json
 
 
 def parse_hotels(data_dict: Dict[str, Dict[str, str]]) -> Union[Dict[str, List[Dict]], None]:
+    sort_order = "PRICE" if data_dict.get('last_command') == 'lowprice' else 'PRICE_HIGHEST_FIRST'
     querystring = {
         "destinationId": data_dict['city_id'],
         "pageNumber": "1", "pageSize": data_dict['amount_hotels'],
         "checkIn": data_dict['start_date'], "checkOut": data_dict['end_date'],
-        "adults1": "1", "sortOrder": "PRICE", "locale": "ru_RU", "currency": "USD"}
+        "adults1": "1", "sortOrder": sort_order, "locale": "ru_RU", "currency": "USD"}
     responce = request_to_api(
         url=RAPID_API_ENDPOINTS['hotel-list'],
         querystring=querystring,
