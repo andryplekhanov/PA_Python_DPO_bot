@@ -104,4 +104,9 @@ def date_reply(call: CallbackQuery) -> None:
             elif not data.get('end_date'):
                 data['end_date'] = result
                 data_dict = data
+
                 ready_for_answer(call.message, data_dict)
+                bot.set_state(call.from_user.id, UsersStates.last_command, call.message.chat.id)
+                bot.send_message(call.message.chat.id,
+                                 f"👍 Вот как-то так.\nМожете ввести ещё какую-нибудь команду!\nНапример: <b>/help</b>",
+                                 parse_mode="html")

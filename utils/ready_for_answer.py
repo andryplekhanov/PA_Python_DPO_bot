@@ -45,3 +45,4 @@ def ready_for_answer(message: Message, data: Dict) -> None:
             bot.send_message(message.chat.id, '⚠️ Не удалось загрузить информацию по отелям города!')
     else:
         bot.send_message(message.chat.id, '⚠️ Ошибка. Попробуйте ещё раз!')
+    return
