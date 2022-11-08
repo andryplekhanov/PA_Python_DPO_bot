@@ -7,7 +7,7 @@ from states.search_info import UsersStates
 from telegram_bot_calendar import DetailedTelegramCalendar
 from datetime import date, timedelta
 from utils.get_cities import parse_cities_group
-from utils.ready_for_answer import ready_for_answer
+from utils.ready_for_answer import low_high_price_answer, best_deal_answer
 import re
 
 
@@ -103,10 +103,99 @@ def date_reply(call: CallbackQuery) -> None:
                                       call.message.chat.id, call.message.message_id, reply_markup=calendar)
             elif not data.get('end_date'):
                 data['end_date'] = result
-                data_dict = data
 
-                ready_for_answer(call.message, data_dict)
-                bot.set_state(call.from_user.id, UsersStates.last_command, call.message.chat.id)
-                bot.send_message(call.message.chat.id,
-                                 f"👍 Вот как-то так.\nМожете ввести ещё какую-нибудь команду!\nНапример: <b>/help</b>",
-                                 parse_mode="html")
+                if data.get('last_command') in ('lowprice', 'highprice'):
+                    data_dict = data
+                    low_high_price_answer(call.message, data_dict)
+                    bot.set_state(call.from_user.id, UsersStates.last_command, call.message.chat.id)
+                    bot.send_message(call.message.chat.id,
+                                     f"👍 Вот как-то так.\nМожете ввести ещё какую-нибудь команду!\n"
+                                     f"Например: <b>/help</b>", parse_mode="html")
+                else:
+                    bot.set_state(call.from_user.id, UsersStates.start_price, call.message.chat.id)
+                    bot.send_message(call.message.chat.id, "Введите минимальную цену за ночь $:")
+
+
+@bot.message_handler(state=UsersStates.start_price, is_digit=True)  # Если количество $ - число
+def get_start_price(message: Message) -> None:
+    if int(message.text) > 0:
+        with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+            data['start_price'] = int(message.text)
+        bot.set_state(message.from_user.id, UsersStates.end_price, message.chat.id)
+        bot.send_message(message.chat.id, "Введите максимальную цену за ночь $:")
+    else:
+        bot.send_message(message.from_user.id, '⚠️ Введите число больше нуля')
+
+
+@bot.message_handler(state=UsersStates.start_price, is_digit=False)  # Если количество $ - не число
+def start_price_incorrect(message: Message) -> None:
+    bot.send_message(message.from_user.id, '⚠️ Введите число больше нуля')
+
+
+@bot.message_handler(state=UsersStates.end_price, is_digit=True)  # Если количество $ - число
+def get_end_price(message: Message) -> None:
+    if int(message.text) > 0:
+        with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+            if int(message.text) > data['start_price']:
+                data['end_price'] = int(message.text)
+                bot.set_state(message.from_user.id, UsersStates.start_distance, message.chat.id)
+                bot.send_message(message.chat.id, "Введите минимальное расстояние до центра в км\n"
+                                                  "(например 0.1):")
+            else:
+                bot.send_message(message.chat.id,
+                                 f"⚠️ Максимальная цена должна быть больше {data['start_price']}$")
+    else:
+        bot.send_message(message.from_user.id, '⚠️ Введите число больше нуля')
+
+
+@bot.message_handler(state=UsersStates.end_price, is_digit=False)  # Если количество $ - не число
+def end_price_incorrect(message: Message) -> None:
+    bot.send_message(message.from_user.id, '⚠️ Введите число больше нуля')
+
+
+@bot.message_handler(state=UsersStates.start_distance)
+def get_start_distance(message: Message) -> None:
+    if ',' in message.text:
+        message.text = message.text.replace(',', '.')
+
+    try:
+        message.text = float(message.text)
+        if message.text > 0:
+            with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+                data['start_distance'] = message.text
+            bot.set_state(message.from_user.id, UsersStates.end_distance, message.chat.id)
+            bot.send_message(message.chat.id, "Введите максимальное расстояние до центра в км\n"
+                                              "(например 15.5):")
+        else:
+            bot.send_message(message.from_user.id, '⚠️ Введите число больше нуля')
+    except Exception:
+        bot.send_message(message.chat.id, "⚠️Введите число - минимальное расстояние до центра в км\n"
+                                          "(например 0.1):")
+
+
+@bot.message_handler(state=UsersStates.end_distance)
+def get_end_distance(message: Message) -> None:
+    if ',' in message.text:
+        message.text = message.text.replace(',', '.')
+
+    try:
+        message.text = float(message.text)
+        if message.text > 0:
+            with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+                if message.text > data['start_distance']:
+                    data['end_distance'] = message.text
+                    data_dict = data
+                    best_deal_answer(message, data_dict)
+                    bot.set_state(message.from_user.id, UsersStates.last_command, message.chat.id)
+                    bot.send_message(message.chat.id,
+                                     f"👍 Вот как-то так.\nМожете ввести ещё какую-нибудь команду!\n"
+                                     f"Например: <b>/help</b>", parse_mode="html")
+                else:
+                    bot.send_message(message.chat.id,
+                                     f"⚠️ Максимальное расстояние должно быть больше {data['start_distance']}")
+        else:
+            bot.send_message(message.from_user.id, '⚠️ Введите число больше нуля')
+
+    except Exception:
+        bot.send_message(message.chat.id, "⚠️Введите число - максимальное расстояние до центра в км\n"
+                                          "(например 15.5):")
