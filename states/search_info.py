@@ -11,3 +11,7 @@ class UsersStates(StatesGroup):
     amount_photo = State()
     start_date = State()
     end_date = State()
+    start_price = State()
+    end_price = State()
+    start_distance = State()
+    end_distance = State()
