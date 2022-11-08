@@ -2,7 +2,7 @@ from loader import bot
 from telebot.types import Message, CallbackQuery
 from keyboards.inline.yes_no_reply import get_yes_no
 from keyboards.inline.cities_for_choice import print_cities
-from keyboards.inline.cities_for_choice import for_city
+from utils.factories import for_city
 from states.search_info import UsersStates
 from telegram_bot_calendar import DetailedTelegramCalendar
 from datetime import date, timedelta

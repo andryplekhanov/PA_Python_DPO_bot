@@ -1,8 +1,6 @@
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
-from telebot.callback_data import CallbackData
+from utils.factories import for_city
 from typing import Dict
-
-for_city = CallbackData('city_id', prefix="search")  # фабрика
 
 
 def print_cities(cities_dict: Dict[str, str]) -> InlineKeyboardMarkup:
