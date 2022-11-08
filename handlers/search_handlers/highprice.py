@@ -1,13 +1,13 @@
 from loader import bot
-from telebot.types import Message, CallbackQuery
+from telebot.types import Message
 from states.search_info import UsersStates
 from handlers import survey_handlers
 
 
-@bot.message_handler(commands=['lowprice'])
+@bot.message_handler(commands=['highprice'])
 def bot_low_price(message: Message) -> None:
     bot.delete_state(message.from_user.id, message.chat.id)  # перед началом опроса зачищаем все собранные состояния
     bot.set_state(message.from_user.id, UsersStates.cities, message.chat.id)
     bot.send_message(message.from_user.id, 'Введите город')
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
-        data['last_command'] = 'lowprice'
+        data['last_command'] = 'highprice'
