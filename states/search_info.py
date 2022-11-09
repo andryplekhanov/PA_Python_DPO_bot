@@ -13,5 +13,4 @@ class UsersStates(StatesGroup):
     end_date = State()
     start_price = State()
     end_price = State()
-    start_distance = State()
     end_distance = State()
