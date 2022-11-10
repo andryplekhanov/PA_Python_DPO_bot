@@ -1,11 +1,8 @@
 from telebot import TeleBot
 from telebot.storage import StateMemoryStorage
 from config_data import config
-from database.user_db import UserDb
-from database.user_history_db import HistoryUserDb
+from peewee import SqliteDatabase
 
 storage = StateMemoryStorage()
 bot = TeleBot(token=config.BOT_TOKEN, state_storage=storage)
-
-db_user = UserDb('user.db')
-db_history = HistoryUserDb('history_user.db')
+db = SqliteDatabase('search_history.db')
