@@ -106,7 +106,7 @@ def date_reply(call: CallbackQuery) -> None:
 
                 if data.get('last_command') in ('lowprice', 'highprice'):
                     data_dict = data
-                    low_high_price_answer(call.message, data_dict)
+                    low_high_price_answer(call.message, data_dict, call.from_user.username)
                     bot.set_state(call.from_user.id, UsersStates.last_command, call.message.chat.id)
                     bot.send_message(call.message.chat.id,
                                      f"😉👌 Вот как-то так.\nМожете ввести ещё какую-нибудь команду!\n"
@@ -164,7 +164,7 @@ def get_end_distance(message: Message) -> None:
             with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
                 data['end_distance'] = message.text
                 data_dict = data
-                best_deal_answer(message, data_dict)
+                best_deal_answer(message, data_dict, message.from_user.username)
                 bot.set_state(message.from_user.id, UsersStates.last_command, message.chat.id)
                 bot.send_message(message.chat.id, f"😉👌 Вот как-то так.\nМожете ввести ещё какую-нибудь команду!\n"
                                                   f"Например: <b>/help</b>", parse_mode="html")
