@@ -3,9 +3,10 @@ from typing import Dict
 from telebot.types import Message
 from utils.get_hotels import parse_hotels, process_hotels_info, get_hotel_info_str
 from utils.get_photos import parse_photos, process_photos
+from database.db_controller import save_history
 
 
-def low_high_price_answer(message: Message, data: Dict) -> None:
+def low_high_price_answer(message: Message, data: Dict, user: str) -> None:
     amount_nights = int((data['end_date'] - data['start_date']).total_seconds() / 86400)
     sort_order = 'дешёвых' if data.get('last_command') == 'lowprice' else 'дорогих'
     reply_str = f"✅ Ок, ищем: <b>топ {data['amount_hotels']}</b> " \
@@ -20,12 +21,8 @@ def low_high_price_answer(message: Message, data: Dict) -> None:
     if hotels:
         result_dict = process_hotels_info(hotels.get('results'), amount_nights)
         if result_dict:
-            for hotel_id, hotel_data in result_dict.items():
-                hotel_info_str = get_hotel_info_str(hotel_data, amount_nights)
-                bot.send_message(message.chat.id, hotel_info_str, parse_mode="html", disable_web_page_preview=True)
-
-                if data['need_photo']:
-                    print_photo(message, hotel_id, data['amount_photo'])
+            show_info(message=message, request_data=data, result_data=result_dict, user=user,
+                      amount_nights=amount_nights)
         else:
             bot.send_message(message.chat.id, '⚠️ Не удалось загрузить информацию по отелям города!')
     else:
@@ -51,7 +48,7 @@ def print_photo(message: Message, hotel_id: int, amount_photo: int) -> None:
         bot.send_message(message.chat.id, '⚠️ Ошибка загрузки фото.')
 
 
-def best_deal_answer(message: Message, data: Dict) -> None:
+def best_deal_answer(message: Message, data: Dict, user: str) -> None:
     amount_nights = int((data['end_date'] - data['start_date']).total_seconds() / 86400)
     reply_str = f"✅ Ок, ищем: <b>топ {data['amount_hotels']}</b> отелей в городе <b>{data['city']}</b>\n" \
                 f"В ценовом диапазоне <b>от {data['start_price']}$ до {data['end_price']}$</b>\n" \
@@ -64,25 +61,38 @@ def best_deal_answer(message: Message, data: Dict) -> None:
 
     hotels = parse_hotels(data)
     if hotels:
-        result_dict = process_hotels_info(hotels.get('results'), amount_nights)
-        if result_dict:
-            hotels_counter = 0
-            for hotel_id, hotel_data in result_dict.items():
-                if hotels_counter >= data.get('amount_hotels'):
+        pre_result_dict = process_hotels_info(hotels.get('results'), amount_nights)
+
+        if pre_result_dict:
+            result_dict = dict()
+            for hotel_id, hotel_data in pre_result_dict.items():
+                if len(result_dict.keys()) >= data.get('amount_hotels'):
                     break
                 current_distance = hotel_data.get('distance_city_center')
                 if not current_distance:
                     continue
                 if current_distance <= data.get('end_distance'):
-                    hotel_info_str = get_hotel_info_str(hotel_data, amount_nights)
-                    bot.send_message(message.chat.id, hotel_info_str, parse_mode="html", disable_web_page_preview=True)
+                    result_dict[hotel_id] = hotel_data
 
-                    if data['need_photo']:
-                        print_photo(message, hotel_id, data['amount_photo'])
-                    hotels_counter += 1
-            if hotels_counter == 0:
+            if result_dict:
+                show_info(message=message, request_data=data, result_data=result_dict, user=user,
+                          amount_nights=amount_nights)
+            else:
                 bot.send_message(message.chat.id, '⚠️ Ничего не нашлось! Измените критерии поиска!')
         else:
             bot.send_message(message.chat.id, '⚠️ По вашему запрос ничего не нашлось! Измените критерии поиска!')
     else:
         bot.send_message(message.chat.id, '⚠️ Ошибка. Ничего не нашлось!')
+
+
+def show_info(message: Message, request_data: Dict, result_data: Dict, user: str, amount_nights: int) -> None:
+    try:
+        save_history(request_data=request_data, result_data=result_data, user=user)
+    except Exception:
+        bot.send_message(message.chat.id, '⚠️ Не удалось сохранить результат в базу данных!')
+
+    for hotel_id, hotel_data in result_data.items():
+        hotel_info_str = get_hotel_info_str(hotel_data, amount_nights)
+        bot.send_message(message.chat.id, hotel_info_str, parse_mode="html", disable_web_page_preview=True)
+        if request_data['need_photo']:
+            print_photo(message, hotel_id, request_data['amount_photo'])
