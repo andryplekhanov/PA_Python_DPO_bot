@@ -1,11 +1,13 @@
-from loader import bot
+from loader import bot, db
 import handlers
 from utils.set_bot_commands import set_default_commands
 from keyboards.inline.filters import CityCallbackFilter
 from telebot.custom_filters import StateFilter, IsDigitFilter
+from database.models import User, History
 
 
 if __name__ == '__main__':
+    db.create_tables([User, History])
     set_default_commands(bot)
     bot.add_custom_filter(StateFilter(bot))
     bot.add_custom_filter(IsDigitFilter())
