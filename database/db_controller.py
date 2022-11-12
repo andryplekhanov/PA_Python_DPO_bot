@@ -1,0 +1,117 @@
+from telebot.types import Message
+from database.models import db, User, History, SearchResult
+from utils.get_hotels import get_hotel_info_str
+from datetime import datetime
+from loader import bot
+from typing import Callable
+import functools
+
+
+def save_user(message: Message) -> None:
+    """
+    Функция сохранения имени пользователя.
+    Проверяет наличие пользователя в БД и, если его нет, заносит в БД в таблицу 'users'.
+
+    :param message: сообщение
+    """
+    with db:
+        username = message.from_user.username
+        try:
+            user_id = User.get(User.name == username)
+        except Exception:
+            user_id = None
+        if not user_id:
+            User(name=username).save()
+
+
+def save_history(func: Callable) -> Callable:
+    """
+     Декоратор для сохранения истории поиска в БД.
+     Забирает данные из декорируемой функции и сохраняет в таблицы 'histories' и 'results'.
+
+    :param func:
+    :return: func
+    """
+
+    @functools.wraps(func)
+    def wrapped_func(*args, **kwargs):
+        now = datetime.timestamp(datetime.now())
+
+        with db:
+            History(
+                date=now,
+                command=kwargs.get('request_data').get('last_command'),
+                city=kwargs.get('request_data').get('city'),
+                start_date=kwargs.get('request_data').get('start_date'),
+                end_date=kwargs.get('request_data').get('end_date'),
+                from_user=kwargs.get('user')
+            ).save()
+
+        time = History.select().where(History.from_user == kwargs.get('user') and History.date == now)
+        hotels_list = []
+        for hotel_id, hotel_data in kwargs.get('result_data').items():
+            hotel_tup = (hotel_id, hotel_data.get('name'), hotel_data.get('price_per_night'),
+                         hotel_data.get('total_price'), hotel_data.get('distance_city_center'),
+                         hotel_data.get('hotel_url'), hotel_data.get('hotel_neighbourhood'), time)
+            hotels_list.append(hotel_tup)
+
+        with db:
+            SearchResult.insert_many(hotels_list, fields=[SearchResult.hotel_id, SearchResult.hotel_name,
+                                                          SearchResult.price_per_night, SearchResult.total_price,
+                                                          SearchResult.distance_city_center, SearchResult.hotel_url,
+                                                          SearchResult.hotel_neighbourhood, SearchResult.from_date]
+                                     ).execute()
+
+        result_func = func(*args, **kwargs)
+        return result_func
+    return wrapped_func
+
+
+def show_history(message: Message, user: str) -> None:
+    """
+    Функция вывода истории поиска пользователя.
+
+    :param message: сообщение
+    :param user: имя пользователя Telegram (username)
+    """
+
+    with db:
+        histories = [history for history in History.select().where(History.from_user == user)]
+        for history in histories:
+            amount_nights = int((history.end_date - history.start_date).total_seconds() / 86400)
+            msg = f'<b>Дата:</b> {datetime.fromtimestamp(history.date).strftime("%d-%m-%Y, %H:%M:%S")}\n' \
+                  f'<b>Запрос:</b> {history.command}\n' \
+                  f'<b>В городе:</b> {history.city}\n' \
+                  f'<b>Даты:</b> с {history.start_date} по {history.end_date}'
+            bot.send_message(message.chat.id, text=msg, parse_mode="html")
+
+            history_date = History.get(History.date == history.date)
+            results = [result for result in SearchResult.select().where(SearchResult.from_date == history_date)]
+            for result in results:
+                hotel_data = {
+                    'name': result.hotel_name,
+                    'price_per_night': result.price_per_night,
+                    'total_price': result.total_price,
+                    'distance_city_center': result.distance_city_center,
+                    'hotel_url': result.hotel_url,
+                    'hotel_neighbourhood': result.hotel_neighbourhood
+                }
+                hotel_info = get_hotel_info_str(hotel_data=hotel_data, amount_nights=amount_nights)
+                bot.send_message(message.chat.id, text=hotel_info, parse_mode="html", disable_web_page_preview=True)
+
+
+def delete_history(message: Message, user: str) -> None:
+    """
+    Функция очистки истории поиска пользователя.
+
+    :param message: сообщение
+    :param user: имя пользователя Telegram (username)
+    """
+
+    with db:
+        for history in History.select().where(History.from_user == user):
+            history_date = History.get(History.date == history.date)
+            for result in SearchResult.select().where(SearchResult.from_date == history_date):
+                SearchResult.delete_instance(result)
+            History.delete_instance(history)
+        bot.send_message(message.chat.id, text='<b>👍 История поиска очищена!</b>', parse_mode="html")
