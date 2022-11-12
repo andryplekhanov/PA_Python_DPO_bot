@@ -28,9 +28,6 @@ def save_history(func: Callable) -> Callable:
     """
      Декоратор для сохранения истории поиска в БД.
      Забирает данные из декорируемой функции и сохраняет в таблицы 'histories' и 'results'.
-
-    :param func:
-    :return: func
     """
 
     @functools.wraps(func)
@@ -111,7 +108,6 @@ def delete_history(message: Message, user: str) -> None:
     with db:
         for history in History.select().where(History.from_user == user):
             history_date = History.get(History.date == history.date)
-            for result in SearchResult.select().where(SearchResult.from_date == history_date):
-                SearchResult.delete_instance(result)
+            SearchResult.delete().where(SearchResult.from_date == history_date).execute()
             History.delete_instance(history)
-        bot.send_message(message.chat.id, text='<b>👍 История поиска очищена!</b>', parse_mode="html")
+    bot.send_message(message.chat.id, text='<b>👍 История поиска очищена!</b>', parse_mode="html")
