@@ -1,10 +1,13 @@
-from telebot.types import Message
+import re
+from telebot.types import Message, CallbackQuery
 from database.models import db, User, History, SearchResult
 from utils.get_hotels import get_hotel_info_str
 from datetime import datetime
 from loader import bot
 from typing import Callable
 import functools
+from keyboards.inline.history_result_choice import print_histories
+from utils.factories import for_history
 
 
 def save_user(message: Message) -> None:
@@ -45,18 +48,21 @@ def save_history(func: Callable) -> Callable:
             ).save()
 
         time = History.select().where(History.from_user == kwargs.get('user') and History.date == now)
+        amount_nights = int((kwargs.get('request_data').get('end_date') - kwargs.get('request_data')
+                             .get('start_date')).total_seconds() / 86400)
         hotels_list = []
         for hotel_id, hotel_data in kwargs.get('result_data').items():
             hotel_tup = (hotel_id, hotel_data.get('name'), hotel_data.get('price_per_night'),
                          hotel_data.get('total_price'), hotel_data.get('distance_city_center'),
-                         hotel_data.get('hotel_url'), hotel_data.get('hotel_neighbourhood'), time)
+                         hotel_data.get('hotel_url'), hotel_data.get('hotel_neighbourhood'), amount_nights, time)
             hotels_list.append(hotel_tup)
 
         with db:
             SearchResult.insert_many(hotels_list, fields=[SearchResult.hotel_id, SearchResult.hotel_name,
                                                           SearchResult.price_per_night, SearchResult.total_price,
                                                           SearchResult.distance_city_center, SearchResult.hotel_url,
-                                                          SearchResult.hotel_neighbourhood, SearchResult.from_date]
+                                                          SearchResult.hotel_neighbourhood, SearchResult.amount_nights,
+                                                          SearchResult.from_date]
                                      ).execute()
 
         result_func = func(*args, **kwargs)
@@ -67,6 +73,7 @@ def save_history(func: Callable) -> Callable:
 def show_history(message: Message, user: str) -> None:
     """
     Функция вывода истории поиска пользователя.
+    Предлагает пользователю инлайн-клавиатуру с его прошлыми запросами из таблицы 'histories'
 
     :param message: сообщение
     :param user: имя пользователя Telegram (username)
@@ -74,27 +81,42 @@ def show_history(message: Message, user: str) -> None:
 
     with db:
         histories = [history for history in History.select().where(History.from_user == user)]
-        for history in histories:
-            amount_nights = int((history.end_date - history.start_date).total_seconds() / 86400)
-            msg = f'<b>Дата:</b> {datetime.fromtimestamp(history.date).strftime("%d-%m-%Y, %H:%M:%S")}\n' \
-                  f'<b>Запрос:</b> {history.command}\n' \
-                  f'<b>В городе:</b> {history.city}\n' \
-                  f'<b>Даты:</b> с {history.start_date} по {history.end_date}'
-            bot.send_message(message.chat.id, text=msg, parse_mode="html")
+        if histories:
+            bot.send_message(message.chat.id, text='Вот ваши прошлые запросы, выбирайте:',
+                             reply_markup=print_histories(histories))
+        else:
+            bot.send_message(message.chat.id,
+                             f"<b>Ваша история пуста!</b>\nВведите какую-нибудь команду!\n"
+                             f"Например: <b>/help</b>",
+                             parse_mode="html")
 
-            history_date = History.get(History.date == history.date)
-            results = [result for result in SearchResult.select().where(SearchResult.from_date == history_date)]
-            for result in results:
-                hotel_data = {
-                    'name': result.hotel_name,
-                    'price_per_night': result.price_per_night,
-                    'total_price': result.total_price,
-                    'distance_city_center': result.distance_city_center,
-                    'hotel_url': result.hotel_url,
-                    'hotel_neighbourhood': result.hotel_neighbourhood
-                }
-                hotel_info = get_hotel_info_str(hotel_data=hotel_data, amount_nights=amount_nights)
-                bot.send_message(message.chat.id, text=hotel_info, parse_mode="html", disable_web_page_preview=True)
+
+@bot.callback_query_handler(func=None, history_config=for_history.filter())
+def clarify_history(call: CallbackQuery) -> None:
+    """
+    Функция ловит нажатие кнопки с выбором старых запросов и выдает результат.
+    """
+
+    history_date = int(re.search(r'\d+', call.data).group())
+    with db:
+        results = [result for result in SearchResult.select().where(SearchResult.from_date == history_date)]
+        for result in results:
+            hotel_data = {
+                'name': result.hotel_name,
+                'price_per_night': result.price_per_night,
+                'total_price': result.total_price,
+                'distance_city_center': result.distance_city_center,
+                'hotel_url': result.hotel_url,
+                'hotel_neighbourhood': result.hotel_neighbourhood
+            }
+            hotel_info = get_hotel_info_str(hotel_data=hotel_data, amount_nights=result.amount_nights)
+            bot.send_message(call.message.chat.id, text=hotel_info, parse_mode="html", disable_web_page_preview=True)
+
+    bot.send_message(
+        call.message.chat.id,
+        f"😉👌 Вот как-то так.\nМожете ввести ещё какую-нибудь команду!\nНапример: <b>/help</b>",
+        parse_mode="html"
+    )
 
 
 def delete_history(message: Message, user: str) -> None:
@@ -110,4 +132,7 @@ def delete_history(message: Message, user: str) -> None:
             history_date = History.get(History.date == history.date)
             SearchResult.delete().where(SearchResult.from_date == history_date).execute()
             History.delete_instance(history)
-    bot.send_message(message.chat.id, text='<b>👍 История поиска очищена!</b>', parse_mode="html")
+    bot.send_message(message.chat.id,
+                     f"👍 <b>История поиска очищена!</b>\n"
+                     f"Введите какую-нибудь команду!\nНапример: <b>/help</b>",
+                     parse_mode="html")
