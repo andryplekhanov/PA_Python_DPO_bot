@@ -8,3 +8,10 @@ class CityCallbackFilter(AdvancedCustomFilter):
 
     def check(self, call: types.CallbackQuery, config: CallbackDataFilter):
         return config.check(query=call)
+
+
+class HistoryCallbackFilter(AdvancedCustomFilter):
+    key = 'history_config'
+
+    def check(self, call: types.CallbackQuery, config: CallbackDataFilter):
+        return config.check(query=call)
