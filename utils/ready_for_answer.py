@@ -85,12 +85,8 @@ def best_deal_answer(message: Message, data: Dict, user: str) -> None:
         bot.send_message(message.chat.id, '⚠️ Ошибка. Ничего не нашлось!')
 
 
+@save_history
 def show_info(message: Message, request_data: Dict, result_data: Dict, user: str, amount_nights: int) -> None:
-    try:
-        save_history(request_data=request_data, result_data=result_data, user=user)
-    except Exception:
-        bot.send_message(message.chat.id, '⚠️ Не удалось сохранить результат в базу данных!')
-
     for hotel_id, hotel_data in result_data.items():
         hotel_info_str = get_hotel_info_str(hotel_data, amount_nights)
         bot.send_message(message.chat.id, hotel_info_str, parse_mode="html", disable_web_page_preview=True)
