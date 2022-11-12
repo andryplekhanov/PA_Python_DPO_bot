@@ -37,6 +37,7 @@ class SearchResult(BaseModel):
     distance_city_center = FloatField()
     hotel_url = CharField()
     hotel_neighbourhood = CharField()
+    amount_nights = IntegerField()
     from_date = ForeignKeyField(History.date)
 
     class Meta:
