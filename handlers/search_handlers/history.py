@@ -7,13 +7,12 @@ from database.db_controller import show_history, delete_history
 @bot.message_handler(commands=['history'])
 def bot_history(message: Message):
     bot.delete_state(message.from_user.id, message.chat.id)
-    bot.send_message(message.from_user.id, 'Пожалуйста, уточните:', reply_markup=get_history_action())
+    bot.send_message(message.from_user.id, 'Выберите действие:', reply_markup=get_history_action())
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'show_history' or call.data == 'delete_history')
 def process_history_reply(call: CallbackQuery) -> None:
     if call.data == "show_history":
-        bot.send_message(call.message.chat.id, text='История поиска:')
         try:
             show_history(call.message, user=call.from_user.username)
         except Exception:
@@ -23,6 +22,3 @@ def process_history_reply(call: CallbackQuery) -> None:
             delete_history(call.message, user=call.from_user.username)
         except Exception:
             bot.send_message(call.message.chat.id, text='⚠️Упс... ошибка: не могу удалить историю поиска:')
-    bot.send_message(call.message.chat.id,
-                     f"😉👌 Вот как-то так.\nМожете ввести ещё какую-нибудь команду!\n"
-                     f"Например: <b>/help</b>", parse_mode="html")
