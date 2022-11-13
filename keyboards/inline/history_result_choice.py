@@ -2,9 +2,16 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from utils.factories import for_history
 from typing import List
 from datetime import datetime
+from database.models import History
 
 
-def print_histories(histories_list: List) -> InlineKeyboardMarkup:
+def print_histories(histories_list: List[History]) -> InlineKeyboardMarkup:
+    """
+    Клавиатура с кнопками с историей поиска. Каждая кнопка: "дата запроса — тип запроса — город поиска".
+
+    :param histories_list: список с историями поиска пользователя. Каждая история - объект класса History.
+    :return: клавиатура InlineKeyboardMarkup.
+    """
     keyboard = InlineKeyboardMarkup(row_width=1)
     for history in histories_list:
         text = f'{datetime.fromtimestamp(history.date).strftime("%d.%m.%Y, %H:%M")} — ' \

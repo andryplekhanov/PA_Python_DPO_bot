@@ -5,6 +5,14 @@ import json
 
 
 def parse_photos(hotel_id: int) -> Union[List[Dict], None]:
+    """
+    Функция делает запрос в request_to_api и десериализирует результат. Если запрос получен и десериализация прошла -
+    возвращает обработанный результат в виде списка словарей, иначе None.
+
+    :param hotel_id: id отеля для запроса по api.
+    :return: None или список словарей с полной информацией по фоткам отеля.
+    """
+
     querystring = {"id": hotel_id}
     responce = request_to_api(
         url=RAPID_API_ENDPOINTS['hotel-photos'],
@@ -17,6 +25,15 @@ def parse_photos(hotel_id: int) -> Union[List[Dict], None]:
 
 
 def process_photos(all_photos: List[Dict], amount_photos: int) -> Union[List[str], None]:
+    """
+    Функция получает список словарей - результат парсинга фоток, выбирает нужную информацию, обрабатывает и складывает
+    в список result.
+
+    :param all_photos: список словарей с полной информацией по фоткам отеля.
+    :param amount_photos: количество фотографий.
+    :return: result - список заданной в amount_photos длины с url фоток.
+    """
+
     photos = all_photos[:amount_photos]
     result = list()
     for photo in photos:

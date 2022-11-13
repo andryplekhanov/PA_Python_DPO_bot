@@ -4,6 +4,11 @@ from typing import Dict
 
 
 def print_cities(cities_dict: Dict[str, str]) -> InlineKeyboardMarkup:
+    """
+    Клавиатура с кнопками - выбор подходящего по названию города, из которых пользователь выбирает нужный ему.
+    :param cities_dict: словарь с названиями городов и их id.
+    :return: клавиатура InlineKeyboardMarkup.
+    """
     keyboard = InlineKeyboardMarkup(row_width=1)
 
     for city, city_id in cities_dict.items():

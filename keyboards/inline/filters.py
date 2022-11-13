@@ -4,6 +4,8 @@ from telebot import types
 
 
 class CityCallbackFilter(AdvancedCustomFilter):
+    """ Фильтр для клавиатуры с выбором городов """
+
     key = 'city_config'
 
     def check(self, call: types.CallbackQuery, config: CallbackDataFilter):
@@ -11,6 +13,8 @@ class CityCallbackFilter(AdvancedCustomFilter):
 
 
 class HistoryCallbackFilter(AdvancedCustomFilter):
+    """ Фильтр для клавиатуры с выбором истории поиска """
+
     key = 'history_config'
 
     def check(self, call: types.CallbackQuery, config: CallbackDataFilter):

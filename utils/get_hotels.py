@@ -5,7 +5,15 @@ import re
 import json
 
 
-def parse_hotels(data_dict: Dict[str, Dict[str, str]]) -> Union[Dict[str, List[Dict]], None]:
+def parse_hotels(data_dict: Dict) -> Union[Dict[str, List[Dict]], None]:
+    """
+    Функция делает запрос в request_to_api и десериализирует результат. Если запрос получен и десериализация прошла -
+    возвращает обработанный результат в виде словаря, иначе None.
+
+    :param data_dict: словарь - данные для запроса по api.
+    :return: None или словарь с ключом 'results' и значением - списком словарей полученных отелей.
+    """
+
     if data_dict.get('last_command') == 'highprice':
         sort_order = 'PRICE_HIGHEST_FIRST'
     elif data_dict.get('last_command') == 'bestdeal':
@@ -38,9 +46,17 @@ def parse_hotels(data_dict: Dict[str, Dict[str, str]]) -> Union[Dict[str, List[D
     return None
 
 
-def process_hotels_info(hotels_info_list: List[Dict], amount_nights: int) -> Dict:
-    hotels_info_dict = dict()
+def process_hotels_info(hotels_info_list: List[Dict], amount_nights: int) -> Dict[int, Dict]:
+    """
+    Функция получает список словарей - результат парсинга отелей, выбирает нужную информацию, обрабатывает и складывает
+    в словарь hotels_info_dict
 
+    :param hotels_info_list: список со словарями. Каждый словарь - полная информация по отелю (результат парсинга).
+    :param amount_nights: количество ночей.
+    :return: словарь с информацией по отелю: {hotel_id: {hotel_info}} (теоретически может быть пустым).
+    """
+
+    hotels_info_dict = dict()
     for hotel in hotels_info_list:
         hotel_id = hotel.get('id')
         if not hotel_id:
@@ -70,24 +86,42 @@ def process_hotels_info(hotels_info_list: List[Dict], amount_nights: int) -> Dic
             'hotel_url': hotel_url,
             'hotel_neighbourhood': hotel_neighbourhood
         }
-    return hotels_info_dict  # теоретически может быть пустым
+    return hotels_info_dict
 
 
 def get_hotel_info_str(hotel_data: Dict, amount_nights: int) -> str:
+    """
+    Функция преобразует данные по отелю из словаря в строку с html.
+    Используется для вывода информации через сообщение (bot.send_message).
+
+    :param hotel_data: словарь с информацией по отелю.
+    :param amount_nights: количество ночей.
+    :return: строка с html с информацией по отелю
+    """
+
     result = f"<b>🏩 Отель:</b> {hotel_data['name']}\n" \
-            f"<b>📍 Район:</b> {hotel_data['hotel_neighbourhood']}\n" \
-            f"<b>🚕 Расстояние до центра:</b> {hotel_data['distance_city_center']} Км\n" \
-            f"<b>💰 Цена за 1 ночь: </b> от {hotel_data['price_per_night']}$\n" \
-            f"<b>💰💰 Примерная стоимость за {amount_nights} ноч.:</b> {hotel_data['total_price']}$\n" \
-            f"<b>⚓️ Подробнее об отеле <a href='{hotel_data['hotel_url']}'>на сайте >></a></b>"
+             f"<b>📍 Район:</b> {hotel_data['hotel_neighbourhood']}\n" \
+             f"<b>🚕 Расстояние до центра:</b> {hotel_data['distance_city_center']} Км\n" \
+             f"<b>💰 Цена за 1 ночь: </b> от {hotel_data['price_per_night']}$\n" \
+             f"<b>💰💰 Примерная стоимость за {amount_nights} ноч.:</b> {hotel_data['total_price']}$\n" \
+             f"<b>⚓️ Подробнее об отеле <a href='{hotel_data['hotel_url']}'>на сайте >></a></b>"
     return result
 
 
 def get_hotel_info_str_nohtml(hotel_data: Dict, amount_nights: int) -> str:
+    """
+    Функция преобразует данные по отелю из словаря в строку без html.
+    Используется для вывода информации через медиа группу (bot.send_media_group).
+
+    :param hotel_data: словарь с информацией по отелю.
+    :param amount_nights: количество ночей.
+    :return: строка без html с информацией по отелю.
+    """
+
     result = f"🏩 {hotel_data['name']}\n" \
-            f"📍 Район: {hotel_data['hotel_neighbourhood']}\n" \
-            f"🚕 Расстояние до центра: {hotel_data['distance_city_center']} Км\n" \
-            f"💰 Цена за 1 ночь: от {hotel_data['price_per_night']}$\n" \
-            f"💰💰 Примерная стоимость за {amount_nights} ноч.: {hotel_data['total_price']}$\n" \
-            f"⚓️ Подробнее об отеле: {hotel_data['hotel_url']}"
+             f"📍 Район: {hotel_data['hotel_neighbourhood']}\n" \
+             f"🚕 Расстояние до центра: {hotel_data['distance_city_center']} Км\n" \
+             f"💰 Цена за 1 ночь: от {hotel_data['price_per_night']}$\n" \
+             f"💰💰 Примерная стоимость за {amount_nights} ноч.: {hotel_data['total_price']}$\n" \
+             f"⚓️ Подробнее об отеле: {hotel_data['hotel_url']}"
     return result

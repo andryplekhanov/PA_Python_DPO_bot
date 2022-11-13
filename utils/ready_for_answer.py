@@ -7,6 +7,16 @@ from database.db_controller import save_history
 
 
 def low_high_price_answer(message: Message, data: Dict, user: str) -> None:
+    """
+    Функция делает запросы на парсинг отелей и на обработку полученных данных.
+    Если данные получены - вызывает функцию show_info.
+    Если в результате какого-либо из запросов получает None - показывает сообщение об ошибке.
+
+    :param message: сообщение Telegram
+    :param data: словарь с данными запроса (город, даты поездки, нужны ли фото)
+    :param user: имя пользователя Telegram (username)
+    """
+
     amount_nights = int((data['end_date'] - data['start_date']).total_seconds() / 86400)
     sort_order = 'дешёвых' if data.get('last_command') == 'lowprice' else 'дорогих'
     reply_str = f"✅ Ок, ищем: <b>топ {data['amount_hotels']}</b> " \
@@ -27,10 +37,19 @@ def low_high_price_answer(message: Message, data: Dict, user: str) -> None:
             bot.send_message(message.chat.id, '⚠️ Не удалось загрузить информацию по отелям города!')
     else:
         bot.send_message(message.chat.id, '⚠️ Ошибка. Попробуйте ещё раз!')
-    return
 
 
 def get_photos(message: Message, hotel_id: int, amount_photo: int) -> Union[List[str], None]:
+    """
+    Функция делает запросы на парсинг фото и на обработку полученных данных.
+    В результате каждого из запросов может прийти None, тогда выдается сообщение об ошибке и возвращается None
+
+    :param message: сообщение Telegram
+    :param hotel_id: id отеля
+    :param amount_photo: количество фото
+    :return: photos_list - список с url фото или None
+    """
+
     photos_info_list = parse_photos(hotel_id)
     if photos_info_list:
         photos_list = process_photos(photos_info_list, amount_photo)
@@ -41,6 +60,16 @@ def get_photos(message: Message, hotel_id: int, amount_photo: int) -> Union[List
 
 
 def best_deal_answer(message: Message, data: Dict, user: str) -> None:
+    """
+    Функция делает запросы на парсинг отелей и на обработку полученных данных.
+    Если данные получены - вызывает функцию show_info.
+    Если в результате какого-либо из запросов получает None - показывает сообщение об ошибке.
+
+    :param message: сообщение Telegram
+    :param data: словарь с данными запроса (город, даты поездки, нужны ли фото)
+    :param user: имя пользователя Telegram (username)
+    """
+
     amount_nights = int((data['end_date'] - data['start_date']).total_seconds() / 86400)
     reply_str = f"✅ Ок, ищем: <b>топ {data['amount_hotels']}</b> отелей в городе <b>{data['city']}</b>\n" \
                 f"В ценовом диапазоне <b>от {data['start_price']}$ до {data['end_price']}$</b>\n" \
@@ -78,7 +107,22 @@ def best_deal_answer(message: Message, data: Dict, user: str) -> None:
 
 
 @save_history
-def show_info(message: Message, request_data: Dict, result_data: Dict, user: str, amount_nights: int) -> None:
+def show_info(
+        message: Message, request_data: Dict, result_data: Dict[int, Dict], user: str, amount_nights: int
+) -> None:
+    """
+    Функция вывода информации по найденным отелям.
+    Если пользователь задал вывод фото - Отправляет медиа группу (bot.send_media_group)
+    Иначе просто сообщение (bot.send_message)
+
+    :param message: сообщение Telegram
+    :param request_data: словарь с данными запроса (город, даты поездки, нужны ли фото)
+    :param result_data: словарь с найденными отелями
+    :param user: имя пользователя Telegram (username) - перехватывается и используется только в декораторе
+    для сохранения истории
+    :param amount_nights: количество ночей
+    """
+
     for hotel_id, hotel_data in result_data.items():
         if request_data['need_photo']:
             photo_urls = get_photos(message, hotel_id, request_data['amount_photo'])

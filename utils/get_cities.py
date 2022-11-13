@@ -6,6 +6,13 @@ import json
 
 
 def parse_cities_group(city: str) -> Union[Dict[str, str], None]:
+    """
+    Функция делает запрос в request_to_api и десериализирует результат. Если запрос получен и десериализация прошла -
+    возвращает обработанный результат в виде словаря - подходящие города и их id, иначе None.
+
+    :param city: город для поиска.
+    :return: None или словарь с результатом: {'city_name': 'city_id'}
+    """
     querystring = {"query": city, "locale": "ru_RU", "currency": "USD"}
     responce = request_to_api(
         url=RAPID_API_ENDPOINTS['cities-groups'],
