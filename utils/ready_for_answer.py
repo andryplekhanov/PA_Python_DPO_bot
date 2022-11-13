@@ -1,7 +1,7 @@
 from loader import bot
-from typing import Dict
-from telebot.types import Message
-from utils.get_hotels import parse_hotels, process_hotels_info, get_hotel_info_str
+from typing import Dict, List, Union
+from telebot.types import Message, InputMediaPhoto
+from utils.get_hotels import parse_hotels, process_hotels_info, get_hotel_info_str, get_hotel_info_str_nohtml
 from utils.get_photos import parse_photos, process_photos
 from database.db_controller import save_history
 
@@ -30,22 +30,14 @@ def low_high_price_answer(message: Message, data: Dict, user: str) -> None:
     return
 
 
-def print_photo(message: Message, hotel_id: int, amount_photo: int) -> None:
-    all_photos = "https://www.hotels.com/ho{id}/?pwaThumbnailDialog=thumbnail-gallery".format(id=hotel_id)
-    msg = "<b>🖼 Фото отеля:</b>\n" \
-          "    больше фото <a href='{all_photos}'>по ссылке >></a>".format(all_photos=all_photos)
-    bot.send_message(message.chat.id, msg, parse_mode="html", disable_web_page_preview=True)
-
+def get_photos(message: Message, hotel_id: int, amount_photo: int) -> Union[List[str], None]:
     photos_info_list = parse_photos(hotel_id)
     if photos_info_list:
         photos_list = process_photos(photos_info_list, amount_photo)
         if photos_list:
-            for photo_url in photos_list:
-                bot.send_photo(message.chat.id, photo_url)
-        else:
-            bot.send_message(message.chat.id, '⚠️ Ошибка загрузки фото.')
-    else:
-        bot.send_message(message.chat.id, '⚠️ Ошибка загрузки фото.')
+            return photos_list
+    bot.send_message(message.chat.id, '⚠️ Ошибка загрузки фото.')
+    return None
 
 
 def best_deal_answer(message: Message, data: Dict, user: str) -> None:
@@ -88,7 +80,18 @@ def best_deal_answer(message: Message, data: Dict, user: str) -> None:
 @save_history
 def show_info(message: Message, request_data: Dict, result_data: Dict, user: str, amount_nights: int) -> None:
     for hotel_id, hotel_data in result_data.items():
-        hotel_info_str = get_hotel_info_str(hotel_data, amount_nights)
-        bot.send_message(message.chat.id, hotel_info_str, parse_mode="html", disable_web_page_preview=True)
         if request_data['need_photo']:
-            print_photo(message, hotel_id, request_data['amount_photo'])
+            photo_urls = get_photos(message, hotel_id, request_data['amount_photo'])
+            if photo_urls:
+                hotel_info_str = get_hotel_info_str_nohtml(hotel_data, amount_nights)
+                photos = [
+                    InputMediaPhoto(media=url, caption=hotel_info_str) if index == 0 else InputMediaPhoto(media=url)
+                    for index, url in enumerate(photo_urls)
+                ]
+                bot.send_media_group(message.chat.id, photos)
+            else:
+                hotel_info_str = get_hotel_info_str(hotel_data, amount_nights)
+                bot.send_message(message.chat.id, hotel_info_str, parse_mode="html", disable_web_page_preview=True)
+        else:
+            hotel_info_str = get_hotel_info_str(hotel_data, amount_nights)
+            bot.send_message(message.chat.id, hotel_info_str, parse_mode="html", disable_web_page_preview=True)
