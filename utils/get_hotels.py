@@ -81,3 +81,13 @@ def get_hotel_info_str(hotel_data: Dict, amount_nights: int) -> str:
             f"<b>💰💰 Примерная стоимость за {amount_nights} ноч.:</b> {hotel_data['total_price']}$\n" \
             f"<b>⚓️ Подробнее об отеле <a href='{hotel_data['hotel_url']}'>на сайте >></a></b>"
     return result
+
+
+def get_hotel_info_str_nohtml(hotel_data: Dict, amount_nights: int) -> str:
+    result = f"🏩 {hotel_data['name']}\n" \
+            f"📍 Район: {hotel_data['hotel_neighbourhood']}\n" \
+            f"🚕 Расстояние до центра: {hotel_data['distance_city_center']} Км\n" \
+            f"💰 Цена за 1 ночь: от {hotel_data['price_per_night']}$\n" \
+            f"💰💰 Примерная стоимость за {amount_nights} ноч.: {hotel_data['total_price']}$\n" \
+            f"⚓️ Подробнее об отеле: {hotel_data['hotel_url']}"
+    return result
