@@ -2,9 +2,11 @@ from telebot.types import Message
 from config_data.config import DEFAULT_COMMANDS
 from loader import bot
 from states.search_info import UsersStates
+from loguru import logger
 
 
 @bot.message_handler(commands=['help'])
+@logger.catch
 def bot_help(message: Message):
     """
     Функция, реагирующая на команду 'help'. Выводит сообщение со списком команд.
@@ -18,6 +20,7 @@ def bot_help(message: Message):
 
 
 @bot.message_handler(state=UsersStates.last_command)
+@logger.catch
 def bot_a_help(message: Message):
     """
     Функция, ожидающая ввод новой команды после предыдущего опроса..

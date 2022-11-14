@@ -3,8 +3,10 @@ from utils.factories import for_history
 from typing import List
 from datetime import datetime
 from database.models import History
+from loguru import logger
 
 
+@logger.catch
 def print_histories(histories_list: List[History]) -> InlineKeyboardMarkup:
     """
     Клавиатура с кнопками с историей поиска. Каждая кнопка: "дата запроса — тип запроса — город поиска".

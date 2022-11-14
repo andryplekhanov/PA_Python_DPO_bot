@@ -1,8 +1,10 @@
 import requests
 from requests.models import Response
 from typing import Dict, Union
+from loguru import logger
 
 
+@logger.catch
 def request_to_api(url: str, querystring: Dict, headers: Dict) -> Union[Response, None]:
     """
     Функция осуществляет get-запрос к api. Если ответ == 200: возвращает результат, иначе None.

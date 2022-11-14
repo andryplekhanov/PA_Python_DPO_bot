@@ -26,3 +26,5 @@ RAPID_API_ENDPOINTS = {
     "hotel-list": "https://hotels4.p.rapidapi.com/properties/list",
     "hotel-photos": "https://hotels4.p.rapidapi.com/properties/get-hotel-photos"
 }
+
+LOG_PATH = os.path.abspath(os.path.join('logs', 'debug.log'))

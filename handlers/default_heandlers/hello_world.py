@@ -1,8 +1,10 @@
 from telebot.types import Message
 from loader import bot
+from loguru import logger
 
 
 @bot.message_handler(commands=['hello-world'])  # Это было в ТЗ
+@logger.catch
 def hello_world(message: Message):
     """
     Функция, реагирующая на команду 'hello-world'.

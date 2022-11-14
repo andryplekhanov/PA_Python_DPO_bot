@@ -1,6 +1,8 @@
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from loguru import logger
 
 
+@logger.catch
 def get_history_action() -> InlineKeyboardMarkup:
     """
     Клавиатура с кнопками - выбор действия с историей поиска.

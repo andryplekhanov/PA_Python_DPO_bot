@@ -3,8 +3,10 @@ from utils.api_reqiest import request_to_api
 from config_data.config import RAPID_API_HEADERS, RAPID_API_ENDPOINTS
 import re
 import json
+from loguru import logger
 
 
+@logger.catch
 def parse_cities_group(city: str) -> Union[Dict[str, str], None]:
     """
     Функция делает запрос в request_to_api и десериализирует результат. Если запрос получен и десериализация прошла -

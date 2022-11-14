@@ -2,9 +2,11 @@ from loader import bot
 from telebot.types import Message
 from states.search_info import UsersStates
 from handlers import survey_handlers
+from loguru import logger
 
 
 @bot.message_handler(commands=['lowprice'])
+@logger.catch
 def bot_low_price(message: Message) -> None:
     """
     Функция, реагирующая на команду 'lowprice'.

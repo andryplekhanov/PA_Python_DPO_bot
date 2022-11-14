@@ -2,9 +2,11 @@ from telebot.types import Message, CallbackQuery
 from loader import bot
 from keyboards.inline.history_action_choice import get_history_action
 from database.db_controller import show_history, delete_history
+from loguru import logger
 
 
 @bot.message_handler(commands=['history'])
+@logger.catch
 def bot_history(message: Message):
     """
     Функция, реагирующая на команду 'history'.
@@ -18,6 +20,7 @@ def bot_history(message: Message):
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'show_history' or call.data == 'delete_history')
+@logger.catch
 def process_history_reply(call: CallbackQuery) -> None:
     """
     Функция, реагирующая на нажатие кнопки с выбором действия.

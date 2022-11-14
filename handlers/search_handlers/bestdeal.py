@@ -2,9 +2,11 @@ from telebot.types import Message
 from loader import bot
 from states.search_info import UsersStates
 from handlers import survey_handlers
+from loguru import logger
 
 
 @bot.message_handler(commands=['bestdeal'])
+@logger.catch
 def bot_best_deal(message: Message):
     """
     Функция, реагирующая на команду 'bestdeal'.

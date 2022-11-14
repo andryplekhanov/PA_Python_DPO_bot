@@ -8,10 +8,12 @@ from telegram_bot_calendar import DetailedTelegramCalendar
 from datetime import date, timedelta
 from utils.get_cities import parse_cities_group
 from utils.ready_for_answer import low_high_price_answer, best_deal_answer
+from loguru import logger
 import re
 
 
 @bot.message_handler(state=UsersStates.cities, is_digit=True)  # Если название города - цифры
+@logger.catch
 def get_city_incorrect(message: Message) -> None:
     """
     Функция, ожидающая некорректный ввод города. Если название города - цифры - выводит сообщение об ошибке.
@@ -23,6 +25,7 @@ def get_city_incorrect(message: Message) -> None:
 
 
 @bot.message_handler(state=UsersStates.cities, is_digit=False)  # Если название города - не цифры
+@logger.catch
 def get_city(message: Message) -> None:
     """
     Функция, ожидающая корректный ввод города.
@@ -41,6 +44,7 @@ def get_city(message: Message) -> None:
 
 
 @bot.callback_query_handler(func=None, city_config=for_city.filter())
+@logger.catch
 def clarify_city(call: CallbackQuery) -> None:
     """
     Функция, реагирующая на нажатие кнопки с выбором конкретного города.
@@ -58,6 +62,7 @@ def clarify_city(call: CallbackQuery) -> None:
 
 
 @bot.message_handler(state=UsersStates.amount_hotels, is_digit=True)  # Если количество отелей - число
+@logger.catch
 def get_amount_hotels(message: Message) -> None:
     """
     Функция, ожидающая корректный ввод количества отелей.
@@ -76,6 +81,7 @@ def get_amount_hotels(message: Message) -> None:
 
 
 @bot.message_handler(state=UsersStates.amount_hotels, is_digit=False)  # Если количество отелей - не число
+@logger.catch
 def amount_hotels_incorrect(message: Message) -> None:
     """
     Функция, ожидающая некорректный ввод количества отелей.
@@ -88,6 +94,7 @@ def amount_hotels_incorrect(message: Message) -> None:
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'yes' or call.data == 'no')
+@logger.catch
 def need_photo_reply(call: CallbackQuery) -> None:
     """
     Функция, реагирующая на нажатие кнопки 'да' и 'нет' на вопрос о необходимости загрузить фото отелей.
@@ -113,6 +120,7 @@ def need_photo_reply(call: CallbackQuery) -> None:
 
 
 @bot.message_handler(state=UsersStates.amount_photo, is_digit=True)  # Если количество фото - число
+@logger.catch
 def get_amount_photo(message: Message) -> None:
     """
     Функция, ожидающая корректный ввод количества фото.
@@ -131,6 +139,7 @@ def get_amount_photo(message: Message) -> None:
 
 
 @bot.message_handler(state=UsersStates.amount_photo, is_digit=False)  # Если количество фото - не число
+@logger.catch
 def amount_photo_incorrect(message: Message) -> None:
     """
     Функция, ожидающая некорректный ввод количества фото.
@@ -143,6 +152,7 @@ def amount_photo_incorrect(message: Message) -> None:
 
 
 @bot.callback_query_handler(func=DetailedTelegramCalendar.func())
+@logger.catch
 def date_reply(call: CallbackQuery) -> None:
     """
     Функция, реагирующая на нажатие кнопки на клавиатуре-календаре.
@@ -188,6 +198,7 @@ def date_reply(call: CallbackQuery) -> None:
 
 
 @bot.message_handler(state=UsersStates.start_price, is_digit=True)  # Если количество $ - число
+@logger.catch
 def get_start_price(message: Message) -> None:
     """
     Функция, ожидающая корректный ввод количества $.
@@ -206,6 +217,7 @@ def get_start_price(message: Message) -> None:
 
 
 @bot.message_handler(state=UsersStates.start_price, is_digit=False)  # Если количество $ - не число
+@logger.catch
 def start_price_incorrect(message: Message) -> None:
     """
     Функция, ожидающая некорректный ввод количества $.
@@ -218,6 +230,7 @@ def start_price_incorrect(message: Message) -> None:
 
 
 @bot.message_handler(state=UsersStates.end_price, is_digit=True)  # Если количество $ - число
+@logger.catch
 def get_end_price(message: Message) -> None:
     """
     Функция, ожидающая корректный ввод количества $.
@@ -241,6 +254,7 @@ def get_end_price(message: Message) -> None:
 
 
 @bot.message_handler(state=UsersStates.end_price, is_digit=False)  # Если количество $ - не число
+@logger.catch
 def end_price_incorrect(message: Message) -> None:
     """
     Функция, ожидающая некорректный ввод количества $.
@@ -253,6 +267,7 @@ def end_price_incorrect(message: Message) -> None:
 
 
 @bot.message_handler(state=UsersStates.end_distance)
+@logger.catch
 def get_end_distance(message: Message) -> None:
     """
     Функция, ожидающая ввод максимального расстояния до центра.

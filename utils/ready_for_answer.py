@@ -4,8 +4,10 @@ from telebot.types import Message, InputMediaPhoto
 from utils.get_hotels import parse_hotels, process_hotels_info, get_hotel_info_str, get_hotel_info_str_nohtml
 from utils.get_photos import parse_photos, process_photos
 from database.db_controller import save_history
+from loguru import logger
 
 
+@logger.catch()
 def low_high_price_answer(message: Message, data: Dict, user: str) -> None:
     """
     Функция делает запросы на парсинг отелей и на обработку полученных данных.
@@ -39,6 +41,7 @@ def low_high_price_answer(message: Message, data: Dict, user: str) -> None:
         bot.send_message(message.chat.id, '⚠️ Ошибка. Попробуйте ещё раз!')
 
 
+@logger.catch()
 def get_photos(message: Message, hotel_id: int, amount_photo: int) -> Union[List[str], None]:
     """
     Функция делает запросы на парсинг фото и на обработку полученных данных.
@@ -59,6 +62,7 @@ def get_photos(message: Message, hotel_id: int, amount_photo: int) -> Union[List
     return None
 
 
+@logger.catch()
 def best_deal_answer(message: Message, data: Dict, user: str) -> None:
     """
     Функция делает запросы на парсинг отелей и на обработку полученных данных.
@@ -107,6 +111,7 @@ def best_deal_answer(message: Message, data: Dict, user: str) -> None:
 
 
 @save_history
+@logger.catch
 def show_info(
         message: Message, request_data: Dict, result_data: Dict[int, Dict], user: str, amount_nights: int
 ) -> None:

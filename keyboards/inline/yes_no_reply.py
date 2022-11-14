@@ -1,6 +1,8 @@
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from loguru import logger
 
 
+@logger.catch
 def get_yes_no() -> InlineKeyboardMarkup:
     """
     Клавиатура с кнопками 'Да' и 'Нет'.

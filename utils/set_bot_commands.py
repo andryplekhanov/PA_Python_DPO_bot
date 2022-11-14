@@ -1,9 +1,11 @@
 from telebot import TeleBot
 from telebot.types import BotCommand
 from config_data.config import DEFAULT_COMMANDS
+from loguru import logger
 
 
-def set_default_commands(bot: TeleBot):
+@logger.catch
+def set_default_commands(bot: TeleBot) -> None:
     """
     Функция создает меню из команд.
     :param bot: TeleBot

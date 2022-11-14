@@ -1,9 +1,11 @@
 from typing import Dict, List, Union
 from utils.api_reqiest import request_to_api
 from config_data.config import RAPID_API_HEADERS, RAPID_API_ENDPOINTS
+from loguru import logger
 import json
 
 
+@logger.catch
 def parse_photos(hotel_id: int) -> Union[List[Dict], None]:
     """
     Функция делает запрос в request_to_api и десериализирует результат. Если запрос получен и десериализация прошла -
@@ -24,6 +26,7 @@ def parse_photos(hotel_id: int) -> Union[List[Dict], None]:
     return None
 
 
+@logger.catch
 def process_photos(all_photos: List[Dict], amount_photos: int) -> Union[List[str], None]:
     """
     Функция получает список словарей - результат парсинга фоток, выбирает нужную информацию, обрабатывает и складывает

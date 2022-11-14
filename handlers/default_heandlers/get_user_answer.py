@@ -1,9 +1,11 @@
 from telebot.types import Message
 from states.search_info import UsersStates
 from loader import bot
+from loguru import logger
 
 
 @bot.message_handler(content_types=['text'])  # Это было в ТЗ
+@logger.catch
 def get_user_answer(message: Message):
     """
     Функция, реагирующая на ввод пользователем сообщения 'привет'.

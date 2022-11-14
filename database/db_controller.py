@@ -8,8 +8,10 @@ from typing import Callable
 import functools
 from keyboards.inline.history_result_choice import print_histories
 from utils.factories import for_history
+from loguru import logger
 
 
+@logger.catch
 def save_user(message: Message) -> None:
     """
     Функция сохранения имени пользователя.
@@ -28,6 +30,7 @@ def save_user(message: Message) -> None:
             User(name=username).save()
 
 
+@logger.catch
 def save_history(func: Callable) -> Callable:
     """
      Декоратор для сохранения истории поиска в БД.
@@ -71,6 +74,7 @@ def save_history(func: Callable) -> Callable:
     return wrapped_func
 
 
+@logger.catch
 def show_history(message: Message, user: str) -> None:
     """
     Функция вывода истории поиска пользователя.
@@ -93,6 +97,7 @@ def show_history(message: Message, user: str) -> None:
 
 
 @bot.callback_query_handler(func=None, history_config=for_history.filter())
+@logger.catch
 def clarify_history(call: CallbackQuery) -> None:
     """
     Функция ловит нажатие кнопки с выбором старых запросов и выдает результат из БД.
@@ -121,6 +126,7 @@ def clarify_history(call: CallbackQuery) -> None:
     )
 
 
+@logger.catch
 def delete_history(message: Message, user: str) -> None:
     """
     Функция очистки истории поиска пользователя.

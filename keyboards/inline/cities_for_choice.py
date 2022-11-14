@@ -1,8 +1,10 @@
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from utils.factories import for_city
 from typing import Dict
+from loguru import logger
 
 
+@logger.catch
 def print_cities(cities_dict: Dict[str, str]) -> InlineKeyboardMarkup:
     """
     Клавиатура с кнопками - выбор подходящего по названию города, из которых пользователь выбирает нужный ему.

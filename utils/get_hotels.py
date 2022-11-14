@@ -1,10 +1,12 @@
 from typing import Dict, List, Union
 from utils.api_reqiest import request_to_api
 from config_data.config import RAPID_API_HEADERS, RAPID_API_ENDPOINTS
+from loguru import logger
 import re
 import json
 
 
+@logger.catch
 def parse_hotels(data_dict: Dict) -> Union[Dict[str, List[Dict]], None]:
     """
     Функция делает запрос в request_to_api и десериализирует результат. Если запрос получен и десериализация прошла -
@@ -46,6 +48,7 @@ def parse_hotels(data_dict: Dict) -> Union[Dict[str, List[Dict]], None]:
     return None
 
 
+@logger.catch
 def process_hotels_info(hotels_info_list: List[Dict], amount_nights: int) -> Dict[int, Dict]:
     """
     Функция получает список словарей - результат парсинга отелей, выбирает нужную информацию, обрабатывает и складывает
@@ -89,6 +92,7 @@ def process_hotels_info(hotels_info_list: List[Dict], amount_nights: int) -> Dic
     return hotels_info_dict
 
 
+@logger.catch
 def get_hotel_info_str(hotel_data: Dict, amount_nights: int) -> str:
     """
     Функция преобразует данные по отелю из словаря в строку с html.
@@ -108,6 +112,7 @@ def get_hotel_info_str(hotel_data: Dict, amount_nights: int) -> str:
     return result
 
 
+@logger.catch
 def get_hotel_info_str_nohtml(hotel_data: Dict, amount_nights: int) -> str:
     """
     Функция преобразует данные по отелю из словаря в строку без html.
