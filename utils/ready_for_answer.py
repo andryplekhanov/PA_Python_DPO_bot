@@ -3,7 +3,9 @@ from typing import Dict, List, Union
 from telebot.types import Message, InputMediaPhoto
 from utils.get_hotels import parse_hotels, process_hotels_info, get_hotel_info_str, get_hotel_info_str_nohtml
 from utils.get_photos import parse_photos, process_photos
+from utils.pager_for_paginator import my_pages
 from database.db_controller import save_history
+from keyboards.inline.paginator import show_paginator
 from loguru import logger
 
 
@@ -118,15 +120,18 @@ def show_info(
     """
     Функция вывода информации по найденным отелям.
     Если пользователь задал вывод фото - Отправляет медиа группу (bot.send_media_group)
-    Иначе просто сообщение (bot.send_message)
+    Иначе составляет список со строковой информацией по отелям. Затем присваивает этот список пейджеру 'my_pages'
+    и вызывает пагинатор 'show_paginator', который и отобразит результат.
 
     :param message: сообщение Telegram
     :param request_data: словарь с данными запроса (город, даты поездки, нужны ли фото)
-    :param result_data: словарь с найденными отелями
+    :param result_data: словарь с найденными отелями.
     :param user: имя пользователя Telegram (username) - перехватывается и используется только в декораторе
-    для сохранения истории
-    :param amount_nights: количество ночей
+    для сохранения истории.
+    :param amount_nights: количество ночей.
     """
+
+    hotels_info_list = list()
 
     for hotel_id, hotel_data in result_data.items():
         if request_data['need_photo']:
@@ -142,5 +147,9 @@ def show_info(
                 hotel_info_str = get_hotel_info_str(hotel_data, amount_nights)
                 bot.send_message(message.chat.id, hotel_info_str, parse_mode="html", disable_web_page_preview=True)
         else:
-            hotel_info_str = get_hotel_info_str(hotel_data, amount_nights)
-            bot.send_message(message.chat.id, hotel_info_str, parse_mode="html", disable_web_page_preview=True)
+            hotel_info_str = get_hotel_info_str_nohtml(hotel_data, amount_nights)
+            hotels_info_list.append(hotel_info_str)
+
+    if not request_data['need_photo'] and hotels_info_list:
+        my_pages.my_strings = hotels_info_list[:]
+        show_paginator(message)
