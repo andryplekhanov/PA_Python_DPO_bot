@@ -1,13 +1,15 @@
 import re
 from telebot.types import Message, CallbackQuery
 from database.models import db, User, History, SearchResult
-from utils.get_hotels import get_hotel_info_str
+from utils.get_hotels import get_hotel_info_str_nohtml
 from datetime import datetime
 from loader import bot
 from typing import Callable
 import functools
 from keyboards.inline.history_result_choice import print_histories
+from keyboards.inline.paginator import show_paginator
 from utils.factories import for_history
+from utils.pager_for_paginator import my_pages
 from loguru import logger
 
 
@@ -100,13 +102,16 @@ def show_history(message: Message, user: str) -> None:
 @logger.catch
 def clarify_history(call: CallbackQuery) -> None:
     """
-    Функция ловит нажатие кнопки с выбором старых запросов и выдает результат из БД.
+    Функция ловит нажатие кнопки с выбором старых запросов, формирует результат из БД в список.
+    Затем присваивает этот список пейджеру 'my_pages'
+    и вызывает пагинатор 'show_paginator', который и отобразит результат.
+
     :param call: отклик клавиатуры.
     """
-
     history_date = int(re.search(r'\d+', call.data).group())
     with db:
         results = [result for result in SearchResult.select().where(SearchResult.from_date == history_date)]
+        hotels_info_list = list()
         for result in results:
             hotel_data = {
                 'name': result.hotel_name,
@@ -116,14 +121,10 @@ def clarify_history(call: CallbackQuery) -> None:
                 'hotel_url': result.hotel_url,
                 'hotel_neighbourhood': result.hotel_neighbourhood
             }
-            hotel_info = get_hotel_info_str(hotel_data=hotel_data, amount_nights=result.amount_nights)
-            bot.send_message(call.message.chat.id, text=hotel_info, parse_mode="html", disable_web_page_preview=True)
-
-    bot.send_message(
-        call.message.chat.id,
-        f"😉👌 Вот как-то так.\nМожете ввести ещё какую-нибудь команду!\nНапример: <b>/help</b>",
-        parse_mode="html"
-    )
+            hotel_info = get_hotel_info_str_nohtml(hotel_data=hotel_data, amount_nights=result.amount_nights)
+            hotels_info_list.append(hotel_info)
+        my_pages.my_strings = hotels_info_list[:]
+        show_paginator(call.message)
 
 
 @logger.catch
