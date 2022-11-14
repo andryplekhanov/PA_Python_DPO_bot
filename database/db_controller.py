@@ -15,8 +15,9 @@ def save_user(message: Message) -> None:
     Функция сохранения имени пользователя.
     Проверяет наличие пользователя в БД и, если его нет, заносит в БД в таблицу 'users'.
 
-    :param message: сообщение
+    :param message: сообщение.
     """
+
     with db:
         username = message.from_user.username
         try:
@@ -73,10 +74,10 @@ def save_history(func: Callable) -> Callable:
 def show_history(message: Message, user: str) -> None:
     """
     Функция вывода истории поиска пользователя.
-    Предлагает пользователю инлайн-клавиатуру с его прошлыми запросами из таблицы 'histories'
+    Предлагает пользователю инлайн-клавиатуру с его прошлыми запросами из таблицы 'histories'.
 
-    :param message: сообщение
-    :param user: имя пользователя Telegram (username)
+    :param message: сообщение.
+    :param user: имя пользователя Telegram (username).
     """
 
     with db:
@@ -94,7 +95,8 @@ def show_history(message: Message, user: str) -> None:
 @bot.callback_query_handler(func=None, history_config=for_history.filter())
 def clarify_history(call: CallbackQuery) -> None:
     """
-    Функция ловит нажатие кнопки с выбором старых запросов и выдает результат.
+    Функция ловит нажатие кнопки с выбором старых запросов и выдает результат из БД.
+    :param call: отклик клавиатуры.
     """
 
     history_date = int(re.search(r'\d+', call.data).group())

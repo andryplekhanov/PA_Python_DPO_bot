@@ -13,11 +13,24 @@ import re
 
 @bot.message_handler(state=UsersStates.cities, is_digit=True)  # Если название города - цифры
 def get_city_incorrect(message: Message) -> None:
+    """
+    Функция, ожидающая некорректный ввод города. Если название города - цифры - выводит сообщение об ошибке.
+
+    :param message: сообщение Telegram
+    """
+
     bot.send_message(message.from_user.id, '⚠️ Название города должно состоять из букв')
 
 
 @bot.message_handler(state=UsersStates.cities, is_digit=False)  # Если название города - не цифры
 def get_city(message: Message) -> None:
+    """
+    Функция, ожидающая корректный ввод города.
+    Записывает состояние пользователя 'cities' и показывает клавиатуру с выбором конкретного города для уточнения.
+
+    :param message: сообщение Telegram
+    """
+
     cities_dict = parse_cities_group(message.text)
     if cities_dict:
         with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
@@ -29,6 +42,14 @@ def get_city(message: Message) -> None:
 
 @bot.callback_query_handler(func=None, city_config=for_city.filter())
 def clarify_city(call: CallbackQuery) -> None:
+    """
+    Функция, реагирующая на нажатие кнопки с выбором конкретного города.
+    Записывает состояния пользователя 'city_id' и 'city' выбранного города.
+    Предлагает ввести количество отелей.
+
+    :param call: отклик клавиатуры.
+    """
+
     with bot.retrieve_data(call.message.chat.id, call.message.chat.id) as data:
         data['city_id'] = re.search(r'\d+', call.data).group()
         data['city'] = [city for city, city_id in data['cities'].items() if city_id == data['city_id']][0]
@@ -38,6 +59,14 @@ def clarify_city(call: CallbackQuery) -> None:
 
 @bot.message_handler(state=UsersStates.amount_hotels, is_digit=True)  # Если количество отелей - число
 def get_amount_hotels(message: Message) -> None:
+    """
+    Функция, ожидающая корректный ввод количества отелей.
+    Записывает состояние пользователя 'amount_hotels' и показывает клавиатуру с вопросом о необходимости
+    загрузить фото отелей. Варианты ответа: 'да' и 'нет'.
+
+    :param message: сообщение Telegram
+    """
+
     if 1 <= int(message.text) <= 10:
         with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
             data['amount_hotels'] = int(message.text)
@@ -48,11 +77,27 @@ def get_amount_hotels(message: Message) -> None:
 
 @bot.message_handler(state=UsersStates.amount_hotels, is_digit=False)  # Если количество отелей - не число
 def amount_hotels_incorrect(message: Message) -> None:
+    """
+    Функция, ожидающая некорректный ввод количества отелей.
+    Если количество отелей - не число - выводит сообщение об ошибке.
+
+    :param message: сообщение Telegram
+    """
+
     bot.send_message(message.from_user.id, '⚠️ Количество отелей должно быть от 1 до 10')
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'yes' or call.data == 'no')
 def need_photo_reply(call: CallbackQuery) -> None:
+    """
+    Функция, реагирующая на нажатие кнопки 'да' и 'нет' на вопрос о необходимости загрузить фото отелей.
+    Если ответ 'да': записывает состояния пользователя 'need_photo' = True и предлагает ввести количество фото.
+    Если ответ 'нет': записывает состояния пользователя 'need_photo' = False и 'amount_photo' = 0 и
+    показывает клавиатуру-календарь с выбором даты заезда.
+
+    :param call: отклик клавиатуры.
+    """
+
     with bot.retrieve_data(call.message.chat.id, call.message.chat.id) as data:
         if call.data == "yes":
             bot.send_message(call.message.chat.id, text='Введите количество фото')
@@ -69,6 +114,13 @@ def need_photo_reply(call: CallbackQuery) -> None:
 
 @bot.message_handler(state=UsersStates.amount_photo, is_digit=True)  # Если количество фото - число
 def get_amount_photo(message: Message) -> None:
+    """
+    Функция, ожидающая корректный ввод количества фото.
+    Записывает состояние пользователя 'amount_photo' и показывает клавиатуру-календарь с выбором даты заезда.
+
+    :param message: сообщение Telegram
+    """
+
     if 1 <= int(message.text) <= 10:
         with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
             data['amount_photo'] = int(message.text)
@@ -80,11 +132,30 @@ def get_amount_photo(message: Message) -> None:
 
 @bot.message_handler(state=UsersStates.amount_photo, is_digit=False)  # Если количество фото - не число
 def amount_photo_incorrect(message: Message) -> None:
+    """
+    Функция, ожидающая некорректный ввод количества фото.
+    Если количество фото - не число - выводит сообщение об ошибке.
+
+    :param message: сообщение Telegram
+    """
+
     bot.send_message(message.from_user.id, '⚠️ Количество фото от 1 до 10')
 
 
 @bot.callback_query_handler(func=DetailedTelegramCalendar.func())
 def date_reply(call: CallbackQuery) -> None:
+    """
+    Функция, реагирующая на нажатие кнопки на клавиатуре-календаре.
+    Проверяет, записаны ли состояния 'start_date' и 'end_date'.
+    Если нет - снова предлагает выбрать дату и записывает эти состояния.
+    Если да, то проверяет состояние пользователя 'last_command'.
+    Если 'last_command' == 'lowprice' или 'highprice' - завершает опрос и
+    вызывает функцию для подготовки ответа на запрос пользователя. Затем ожидает ввода следующей команды.
+    Иначе продолжает опрос и предлагает ввести минимальную цену за ночь.
+
+    :param call: отклик клавиатуры.
+    """
+
     with bot.retrieve_data(call.message.chat.id, call.message.chat.id) as data:
         if not data.get('start_date'):
             result, key, step = DetailedTelegramCalendar(min_date=date.today()).process(call.data)
@@ -118,6 +189,13 @@ def date_reply(call: CallbackQuery) -> None:
 
 @bot.message_handler(state=UsersStates.start_price, is_digit=True)  # Если количество $ - число
 def get_start_price(message: Message) -> None:
+    """
+    Функция, ожидающая корректный ввод количества $.
+    Записывает состояние пользователя 'start_price' и предлагает ввести максимальную цену за ночь.
+
+    :param message: сообщение Telegram
+    """
+
     if int(message.text) > 0:
         with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
             data['start_price'] = int(message.text)
@@ -129,11 +207,25 @@ def get_start_price(message: Message) -> None:
 
 @bot.message_handler(state=UsersStates.start_price, is_digit=False)  # Если количество $ - не число
 def start_price_incorrect(message: Message) -> None:
+    """
+    Функция, ожидающая некорректный ввод количества $.
+    Если количество $ - не число - выводит сообщение об ошибке.
+
+    :param message: сообщение Telegram
+    """
+
     bot.send_message(message.from_user.id, '⚠️ Введите число больше нуля')
 
 
 @bot.message_handler(state=UsersStates.end_price, is_digit=True)  # Если количество $ - число
 def get_end_price(message: Message) -> None:
+    """
+    Функция, ожидающая корректный ввод количества $.
+    Записывает состояние пользователя 'end_price' и предлагает ввести максимальное расстояние до центра в км.
+
+    :param message: сообщение Telegram
+    """
+
     if int(message.text) > 0:
         with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
             if int(message.text) > data['start_price']:
@@ -150,11 +242,27 @@ def get_end_price(message: Message) -> None:
 
 @bot.message_handler(state=UsersStates.end_price, is_digit=False)  # Если количество $ - не число
 def end_price_incorrect(message: Message) -> None:
+    """
+    Функция, ожидающая некорректный ввод количества $.
+    Если количество $ - не число - выводит сообщение об ошибке.
+
+    :param message: сообщение Telegram
+    """
+
     bot.send_message(message.from_user.id, '⚠️ Введите число больше нуля')
 
 
 @bot.message_handler(state=UsersStates.end_distance)
 def get_end_distance(message: Message) -> None:
+    """
+    Функция, ожидающая ввод максимального расстояния до центра.
+    Записывает состояние пользователя 'end_distance', завершает опрос и
+    вызывает функцию для подготовки ответа на запрос пользователя.
+    Затем ожидает ввода следующей команды.
+
+    :param message: сообщение Telegram
+    """
+
     if ',' in message.text:
         message.text = message.text.replace(',', '.')
 

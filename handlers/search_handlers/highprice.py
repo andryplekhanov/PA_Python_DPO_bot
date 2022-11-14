@@ -6,6 +6,13 @@ from handlers import survey_handlers
 
 @bot.message_handler(commands=['highprice'])
 def bot_low_price(message: Message) -> None:
+    """
+    Функция, реагирующая на команду 'highprice'.
+    Записывает состояние пользователя 'last_command' и предлагает ввести город для поиска отелей.
+
+    :param message: сообщение Telegram
+    """
+
     bot.delete_state(message.from_user.id, message.chat.id)  # перед началом опроса зачищаем все собранные состояния
     bot.set_state(message.from_user.id, UsersStates.cities, message.chat.id)
     bot.send_message(message.from_user.id, 'Введите город')

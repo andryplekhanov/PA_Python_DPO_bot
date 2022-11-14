@@ -6,12 +6,26 @@ from database.db_controller import show_history, delete_history
 
 @bot.message_handler(commands=['history'])
 def bot_history(message: Message):
+    """
+    Функция, реагирующая на команду 'history'.
+    Показывает клавиатуру с выбором действия: 'Показать историю поиска' или 'Очистить историю'.
+
+    :param message: сообщение Telegram.
+    """
+
     bot.delete_state(message.from_user.id, message.chat.id)
     bot.send_message(message.from_user.id, 'Выберите действие:', reply_markup=get_history_action())
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'show_history' or call.data == 'delete_history')
 def process_history_reply(call: CallbackQuery) -> None:
+    """
+    Функция, реагирующая на нажатие кнопки с выбором действия.
+    В зависимости он нажатой кнопки вызывает нужную функцию: 'Показать историю поиска' или 'Очистить историю'.
+
+    :param call: отклик клавиатуры.
+    """
+
     if call.data == "show_history":
         try:
             show_history(call.message, user=call.from_user.username)
