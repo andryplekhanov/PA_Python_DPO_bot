@@ -69,7 +69,7 @@ def process_hotels_info(hotels_info_list: List[Dict], amount_nights: int) -> Dic
         price_per_night = hotel.get('ratePlan', {}).get('price', {}).get('exactCurrent', 0)
         total_price = round(price_per_night * amount_nights, 2)
 
-        distance_city_center = None
+        distance_city_center = 0.0
         if hotel.get('landmarks'):
             for landmark in hotel.get('landmarks'):
                 if landmark.get('label') in ('Центр города', 'City center'):
