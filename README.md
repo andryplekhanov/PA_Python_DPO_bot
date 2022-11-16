@@ -2,7 +2,12 @@
 
 Telegram-бот для анализа сайта [Hotels.com](https://www.hotels.com/) и поиска подходящих пользователю отелей. Работает с API от [Hotels.com](https://www.hotels.com/)
 
-Программа написана в рамках курсовой работы к курсу Python-basic от Skillbox.
+Программа написана на языке Python в рамках курсовой работы к курсу Python-basic от Skillbox.
+
+- Language (язык): Russian
+- Author (Автор): [Андрей Плеханов](https://t.me/andryplekhanov)
+
+**Демонстрация работы программы:** [смотреть видео >>](https://youtu.be/krUpxz1SmEY)
 
 
 ## Как запустить бота:
