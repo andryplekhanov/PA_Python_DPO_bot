@@ -108,6 +108,9 @@ def clarify_history(call: CallbackQuery) -> None:
 
     :param call: отклик клавиатуры.
     """
+
+    bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=None)
+
     history_date = int(re.search(r'\d+', call.data).group())
     with db:
         results = [result for result in SearchResult.select().where(SearchResult.from_date == history_date)]

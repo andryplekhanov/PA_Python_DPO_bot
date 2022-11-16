@@ -53,6 +53,8 @@ def clarify_city(call: CallbackQuery) -> None:
 
     :param call: отклик клавиатуры.
     """
+    bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=None)
+    bot.delete_message(call.message.chat.id, call.message.message_id)
 
     with bot.retrieve_data(call.message.chat.id, call.message.chat.id) as data:
         data['city_id'] = re.search(r'\d+', call.data).group()
@@ -104,6 +106,8 @@ def need_photo_reply(call: CallbackQuery) -> None:
 
     :param call: отклик клавиатуры.
     """
+
+    bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=None)
 
     with bot.retrieve_data(call.message.chat.id, call.message.chat.id) as data:
         if call.data == "yes":
@@ -184,6 +188,8 @@ def date_reply(call: CallbackQuery) -> None:
                                       call.message.chat.id, call.message.message_id, reply_markup=calendar)
             elif not data.get('end_date'):
                 data['end_date'] = result
+
+                bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=None)
 
                 if data.get('last_command') in ('lowprice', 'highprice'):
                     data_dict = data

@@ -14,7 +14,7 @@ def bot_history(message: Message):
 
     :param message: сообщение Telegram.
     """
-
+    bot.delete_message(message.chat.id, message.message_id)
     bot.delete_state(message.from_user.id, message.chat.id)
     bot.send_message(message.from_user.id, 'Выберите действие:', reply_markup=get_history_action())
 
@@ -29,6 +29,8 @@ def process_history_reply(call: CallbackQuery) -> None:
     :param call: отклик клавиатуры.
     """
 
+    bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=None)
+    bot.delete_message(call.message.chat.id, call.message.message_id)
     if call.data == "show_history":
         try:
             show_history(call.message, user=call.from_user.username)
